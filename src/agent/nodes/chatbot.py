@@ -4,9 +4,9 @@ from typing_extensions import Literal
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END
 
+from ..names import *
 from ..states import State
 from .tools import demo_get_precipitation_data
-
 
 
 tools = [
@@ -22,7 +22,7 @@ def chatbot(state: State):
 
 
 # DOC: chatbot router (conditional edge)
-def chatbot_router(state: State) -> Literal[END, "demo_get_precipitation_data_tool_validator"]: # type: ignore
+def chatbot_router(state: State) -> Literal[END, DEMO_GET_PRECIPITATION_DATA_TOOL_VALIDATOR]: # type: ignore
     """
     Use in the conditional_edge to route to the ToolNode if the last message has tool calls. Otherwise, route to the end.
     """
@@ -36,6 +36,6 @@ def chatbot_router(state: State) -> Literal[END, "demo_get_precipitation_data_to
     if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
         # INFO: Check which tool is called (Only implementing first tool call) -> maybe next we can have a for-loop to handle each tool iteratively
         tool_calls = ai_message.tool_calls
-        if tool_calls[0]['name'] == "demo_get_precipitation_data":
-            next_node = "demo_get_precipitation_data_tool_validator" # INFO: prima di passare al tool passo al nodo che gestisce la chimata al tool
+        if tool_calls[0]['name'] == DEMO_GET_PRECIPITATION_DATA:
+            next_node = DEMO_GET_PRECIPITATION_DATA_TOOL_VALIDATOR # INFO: prima di passare al tool passo al nodo che gestisce la chimata al tool
     return next_node

@@ -29,7 +29,7 @@ from langchain_core.runnables.graph import CurveStyle, MermaidDrawMethod, NodeSt
 from langchain_core.messages import RemoveMessage
 
 
-
+from agent.names import *
 from agent.nodes import chatbot
 from agent.nodes import chatbot_router
 from agent.nodes import demo_get_precipitation_data_tool_validator
@@ -43,15 +43,15 @@ graph_builder.add_node(chatbot)
 graph_builder.add_node(demo_get_precipitation_data_tool_validator)
 graph_builder.add_node(demo_get_precipitation_data_tool_runner)
 
-graph_builder.add_edge(START, "chatbot")
-graph_builder.add_conditional_edges("chatbot", chatbot_router)
-graph_builder.add_edge("demo_get_precipitation_data_tool_runner", "chatbot")
+graph_builder.add_edge(START, CHATBOT)
+graph_builder.add_conditional_edges(CHATBOT, chatbot_router)
+graph_builder.add_edge(DEMO_GET_PRECIPITATION_DATA_TOOL_RUNNER, CHATBOT)
 
 memory = MemorySaver()
 
 graph = graph_builder.compile(checkpointer=memory)
 
-graph.name = "New Graph"
+graph.name = GRAPH
 
 
 # import datetime
