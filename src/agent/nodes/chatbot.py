@@ -1,28 +1,30 @@
 # DOC: Chatbot node and router
 
 from typing_extensions import Literal
-from langchain_openai import ChatOpenAI
 from langgraph.graph import END
 
-from ..names import *
-from ..states import State
-from .tools import demo_get_precipitation_data
+from agent.names import *
+from agent.states import State
+from agent.utils import _llm_with_tools
+
+# from .tools import demo_get_precipitation_data, spi_notebook_creation
 
 
-tools = [
-    demo_get_precipitation_data      # INFO: demo tool
-]
+# tools = [
+#     demo_get_precipitation_data,      # INFO: demo tool
+#     spi_notebook_creation,            # INFO: spi tool
+# ]
 
-llm = ChatOpenAI(model="gpt-3.5-turbo-0125").bind_tools(tools)
+# llm = ChatOpenAI(model="gpt-3.5-turbo-0125").bind_tools(tools)
 
 
 # DOC: chatbot node
 def chatbot(state: State):
-    return {"messages": [llm.invoke(state["messages"])]}
+    return {"messages": [_llm_with_tools.invoke(state["messages"])]}
 
 
 # DOC: chatbot router (conditional edge)
-def chatbot_router(state: State) -> Literal[END, DEMO_GET_PRECIPITATION_DATA_TOOL_VALIDATOR]: # type: ignore
+def chatbot_router(state: State) -> Literal[END, DEMO_GET_PRECIPITATION_DATA_TOOL_VALIDATOR, SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR, SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR]: # type: ignore
     """
     Use in the conditional_edge to route to the ToolNode if the last message has tool calls. Otherwise, route to the end.
     """
@@ -38,4 +40,8 @@ def chatbot_router(state: State) -> Literal[END, DEMO_GET_PRECIPITATION_DATA_TOO
         tool_calls = ai_message.tool_calls
         if tool_calls[0]['name'] == DEMO_GET_PRECIPITATION_DATA:
             next_node = DEMO_GET_PRECIPITATION_DATA_TOOL_VALIDATOR # INFO: prima di passare al tool passo al nodo che gestisce la chimata al tool
+        if tool_calls[0]['name'] == SPI_NOTEBOOK_CREATION:
+            next_node = SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR
+        if tool_calls[0]['name'] == SPI_NOTEBOOK_EDITOR:
+            next_node = SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR
     return next_node

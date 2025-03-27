@@ -2,3 +2,4 @@ openai
 langgraph
 langchain-anthropic
 langchain-openai
+geopy
