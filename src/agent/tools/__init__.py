@@ -2,3 +2,4 @@
 
 from .demo_get_precipitation_data_tool import demo_get_precipitation_data
 from .spi_notebook_creation_tool import spi_notebook_creation, spi_notebook_editor
+from .cds_temperature_tool import cds_temperature, cds_temperature_descriptors

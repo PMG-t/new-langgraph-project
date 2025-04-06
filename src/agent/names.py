@@ -31,4 +31,18 @@ SPI_NOTEBOOK_EDITOR = "spi_notebook_editor"
 SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR = "spi_notebook_editor_tool_validator"
 SPI_NOTEBOOK_EDITOR_TOOL_RUNNER = "spi_notebook_editor_tool_runner"
 
-# Endregion: [SPI notebook creation]
+# REGION: [CDS Temperature]
+
+CDS_CHATBOT = "cds_chatbot"
+
+CDS_INGESTOR_TEMPERATURE_SUBGRAPH = "cds_temperature_subgraph"
+
+CDS_INGESTOR_TEMPERATURE = "cds_temperature"
+CDS_INGESTOR_TEMPERATURE_TOOL_HANDLER = "cds_temperature_tool_handler"
+CDS_INGESTOR_TEMPERATURE_TOOL_HANDLE_REGION = "cds_temperature_tool_handle_region"
+CDS_INGESTOR_TEMPERATURE_TOOL_HANDLE_INIT_TIME = "cds_temperature_tool_handle_init_time"
+CDS_INGESTOR_TEMPERATURE_TOOL_HANDLE_LEAD_TIME = "cds_temperature_tool_handle_lead_time"
+CDS_INGESTOR_TEMPERATURE_TOOL_HANDLE_ZARR_OUTPUT_FILE = "cds_temperature_tool_handle_zarr_output_file"
+CDS_INGESTOR_TEMPERATURE_TOOL_RUNNER = "cds_temperature_tool_runner"
+
+# ENDREGION: [CDS Temperature]

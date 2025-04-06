@@ -1,0 +1,1 @@
+from .cds_ingestor import cds_temperature_subgraph

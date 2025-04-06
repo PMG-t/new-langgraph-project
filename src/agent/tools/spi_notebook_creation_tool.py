@@ -16,10 +16,11 @@ def spi_notebook_creation(
 ):
     """
     Build a new Jupyter notebook for calculating the Standardized Precipitation Index (SPI) for a given region and return the path where the notebook is saved.
+    The tool uses the Climate Data Store (CDS) API to retrieve the necessary data from "ERA5-Land monthly averaged data from 1950 to present" dataset
     Use this tool when user asks for an help in SPI calculation even if user does not provide region.
 
     Args:
-        location: location name or list of four elements representing a bounding box (min_lon, min_lat, max_lon, max_lat)
+        location: list of four elements representing a bounding box (min_lon, min_lat, max_lon, max_lat) or name of a region (could be also geographic part of a whole nation or region).
         reference_period: tuple of two elements representing the start and end year of the reference period. Default is (1981, 2010)
         period_of_interest: tuple of two elements representing the start and end month of the period of interest for which SPI has to be calculated. Their value is in a string format "YYYY-MM". Default is the previous month from the current date.
     """
@@ -32,6 +33,7 @@ def spi_notebook_creation(
                 import math
                 import datetime
                 from dateutil.relativedelta import relativedelta
+                import getpass
 
                 import numpy as np
                 import pandas as pd
@@ -39,9 +41,15 @@ def spi_notebook_creation(
 
                 import scipy.stats as stats
                 from scipy.special import gammainc, gamma
+                
+                import matplotlib.pyplot as plt
 
                 !pip install "cdsapi>=0.7.4"
                 import cdsapi
+                
+                !pip install cartopy
+                import cartopy.crs as ccrs
+                import cartopy.feature as cfeature
             """
         }, 
         {
@@ -55,7 +63,7 @@ def spi_notebook_creation(
 
                 period_of_interest = {period_of_interest} # start_month, end_month
 
-                cds_client = cdsapi.Client(url='https://cds.climate.copernicus.eu/api', key='b6c439dd-22d4-4b39-bbf7-9e6e57d9ae0d') # CDS client
+                cds_client = cdsapi.Client(url='https://cds.climate.copernicus.eu/api', key=getpass.getpass("YOUR CDS-API-KEY")) # CDS client
             """
         },
         {
@@ -130,28 +138,28 @@ def spi_notebook_creation(
                 # CDS API query
                 cds_poi_data_filepaths = []
                 for q_idx, (year,year_months) in enumerate(zip(spi_years_range, spi_month_range)):
-                    cds_poi_data_filepath = build_cds_hourly_data_filepath(year, year_months)
+                    for ym in year_months:
+                        cds_poi_data_filepath = build_cds_hourly_data_filepath(year, [ym])
+                        if not os.path.exists(cds_poi_data_filepath):
+                            cds_dataset = 'reanalysis-era5-land'
+                            cds_query =  {
+                                'variable': 'total_precipitation',
+                                'year': [str(year)],
+                                'month': [f'{month:02d}' for month in year_months],
+                                'day': [f'{day:02d}' for day in range(1, 32)],
+                                'time': [f'{hour:02d}:00' for hour in range(0, 24)],
+                                'area': [
+                                    ceil_decimals(region[3], 1),    # N
+                                    floor_decimals(region[0], 1),   # W
+                                    floor_decimals(region[1], 1),   # S
+                                    ceil_decimals(region[2], 1),    # E
+                                ],
+                                "data_format": "netcdf",
+                                "download_format": "unarchived"
+                            }
+                            cds_client.retrieve(cds_dataset, cds_query, cds_poi_data_filepath)
 
-                    if not os.path.exists(cds_poi_data_filepath):
-                        cds_dataset = 'reanalysis-era5-land'
-                        cds_query =  {
-                            'variable': 'total_precipitation',
-                            'year': [str(year)],
-                            'month': [f'{month:02d}' for month in year_months],
-                            'day': [f'{day:02d}' for day in range(1, 32)],
-                            'time': [f'{hour:02d}:00' for hour in range(0, 24)],
-                            'area': [
-                                ceil_decimals(region[3], 1),    # N
-                                floor_decimals(region[0], 1),   # W
-                                floor_decimals(region[1], 1),   # S
-                                ceil_decimals(region[2], 1),    # E
-                            ],
-                            "data_format": "netcdf",
-                            "download_format": "unarchived"
-                        }
-                        cds_client.retrieve(cds_dataset, cds_query, cds_poi_data_filepath)
-
-                    print(f'{q_idx+1}/{len(spi_years_range)} - CDS API query completed')
+                    print(f'{q_idx+1}/{len(year_months)}/{len(spi_years_range)} - CDS API query completed')
                     cds_poi_data_filepaths.append(cds_poi_data_filepath)
 
                 cds_poi_data = [xr.open_dataset(fp) for fp in cds_poi_data_filepaths]
@@ -198,6 +206,12 @@ def spi_notebook_creation(
                     # Compute SPI index for a time series of monthly data
                     # REF: https://drought.emergency.copernicus.eu/data/factsheets/factsheet_spi.pdf
                     # REF: https://mountainscholar.org/items/842b69e8-a465-4aeb-b7ec-021703baa6af [ page 18 to 24 ]
+                    
+                    # SPI calculation needs finite-values and non-zero values
+                    if all([md<=0 for md in monthly_data]):
+                        return 0
+                    if all([np.isnan(md) or md==0 for md in monthly_data]):
+                        return np.nan
                     
                     df = pd.DataFrame({'monthly_data': monthly_data})
 
@@ -276,11 +290,15 @@ def spi_notebook_creation(
     ipynb_filename = os.path.join(utils._temp_dir, f'spi_{region}_notebook.ipynb')
     
     def safe_code(code):
-        lines = [line for line in code.split('\n') if line != '']
+        lines = [line for line in code.split('\n')]
+        while lines[0] == '':
+            lines = lines[1:]
+        while lines[-1] == '':
+            lines = lines[:-1]
         spaces = re.match(r'^\s*', lines[0])
         spaces = len(spaces.group()) if spaces else 0
         lines = [line[spaces:] for line in lines]
-        lines = [f'{line}\n' for line in lines]
+        lines = [f'{line}\n' if idx!=len(lines)-1 else f'{line}' for idx,line in enumerate(lines)]
         return lines   
         
     ipynb_cells = [
@@ -331,30 +349,31 @@ def spi_notebook_editor(notebook_path: str = None, code_request: str = None):
         return re.sub(r"^```(?:python)?\n|\n```$", "", text, flags=re.MULTILINE)
 
     
-    with open(notebook_path) as f:
-        ipynb_json = json.load(f)
+    with open(notebook_path, 'r', encoding='utf-8') as f:
+        ipynb_json = json.loads(f.read())
         cells = ipynb_json.get('cells', [])
         notebook_source_code = '\n'.join(['\n'.join(cell['source']) for cell in cells])
         
         prompt = f"""
-            Sei un assistente di programmazione che aiuta gli utenti a scrivere codice python.
-            Ricorda che il codice è relativo ad un analisi di dati geospaziali.
-            Ti è stato chiesto di scrivere del codice python che soddisfi la seguente richiesta:
-            
+            You are a programming assistant who helps users write python code.
+            Remember that the code is related to an analysis of geospatial data. If map visualizations are requested, use the cartopy library, adding borders, coastlines, lakes and rivers.
+
+            You have been asked to write python code that satisfies the following request:
+
             {code_request}
-            
-            Il codice prodotto deve essere aggiunto a questo codice già esistente:
-            
+
+            The code produced must be added to this existing code:
+
             {notebook_source_code}
-            
+
             ------------------------------------------
-            
-            Rispondi esclusivamente con codice python che sia integrabile con il codice già esistente. Deve utilizzare le variabili opprtune già definite nel codice.
-            Non allegare altro testo.
-            Non produrre codice ulteriore rispetto a quello necessario per soddisfare le richieste dichiarate nel parametro code_lines.
+
+            Respond only with python code that can be integrated with the existing code. It must use the appropriate variables already defined in the code.
+            Do not attach any other text.
+            Do not produce additional code other than that necessary to satisfy the requests declared in the parameter.
         """
         
-        prompt_out = utils._llm.invoke([{"type": "system", "content": prompt}])
+        prompt_out = utils._base_llm.invoke([{"type": "system", "content": prompt}])
         code_lines = clean_code_block(prompt_out.content).split('\n')
             
             
@@ -367,7 +386,7 @@ def spi_notebook_editor(notebook_path: str = None, code_request: str = None):
     
     try:
         ipynb_json = None
-        with open(notebook_path, 'r') as f:
+        with open(notebook_path, 'r', encoding='utf-8') as f:
             ipynb_json = json.load(f)
 
         cells = ipynb_json.get('cells', [])
@@ -386,7 +405,10 @@ def spi_notebook_editor(notebook_path: str = None, code_request: str = None):
             json.dump(ipynb_json, f)
     
         return notebook_path
-    except:
+    except Exception as e:
+        print('\n\n\n\n\n')
+        print(e)
+        print('\n\n\n\n\n')
         return "File not found or not a valid Jupyter notebook"
         
     

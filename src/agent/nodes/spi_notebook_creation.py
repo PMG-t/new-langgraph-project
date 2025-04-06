@@ -9,6 +9,7 @@ from geopy.geocoders import Nominatim
 from ..names import *
 from ..states import State
 from ..tools import spi_notebook_creation
+from ..utils import ask_llm
 
 
 def get_bounding_box(location_name):
@@ -37,25 +38,33 @@ def spi_notebook_creation_tool_validator(state: State) -> Command[Literal[CHATBO
         if type(tool_call['args']['region']) is str:
             rem_msg = [RemoveMessage(id=tool_message.id)]
             region_name = tool_call['args']['region']
-            bounding_box = get_bounding_box(region_name)
+            
+            bounding_box = ask_llm(
+                role='system',
+                message=f"""Give me the bounding box in EPSG:4236 coordinates of this location: {region_name}.
+                I return the bounding box in list format [min_lon, min_lat, max_lon, max_lat] and nothing else.""",
+                eval_output=True
+            )
+            
+            # bounding_box = get_bounding_box(region_name)
             if bounding_box is not None:
                 tool_call['args']['region'] = bounding_box
                 sys_message = f"""
-                    L'utente a rihiesto di eseguire il tool {tool_call["name"]} con  questi argomenti:
-                    - region: {tool_call['args']['region']}
-                    - reference_period: {tool_call['args']['reference_period']}
-                    - period_of_interest: {tool_call['args']['period_of_interest']}
-                    Per l'argomento region è stata ricavata questa bounding box: {tool_call['args']['region']}. Chiedi all'utente se è corretta oppure se vuole modificarla.
+                The user is asked to run the tool {tool_call["name"]} with these arguments:
+                - region: {tool_call['args']['region']}
+                - reference_period: {tool_call['args']['reference_period']}
+                - period_of_interest: {tool_call['args']['period_of_interest']}
+                For the region argument, this bounding box was derived: {tool_call['args']['region']}. Ask the user if it is correct or if he wants to change it.
                 """
                 feedback_message = {"role": "system", "content": sys_message}
                 return Command(goto=CHATBOT, update={"messages": rem_msg + [feedback_message]})
             else:
                 sys_message = f"""
-                    L'utente a rihiesto di eseguire il tool {tool_call["name"]} con  questi argomenti:
-                    - region: {tool_call['args']['region']}
-                    - reference_period: {tool_call['args']['reference_period']}
-                    - period_of_interest: {tool_call['args']['period_of_interest']}
-                    Per l'argomento region non è stato possibile ricavare una bounding box. Chiedi all'utente di inserire manualmente i valori in formato [min_lon, min_lat, max_lon, max_lat]
+                The user requested to run the tool {tool_call["name"]} with these arguments:
+                - region: {tool_call['args']['region']}
+                - reference_period: {tool_call['args']['reference_period']}
+                - period_of_interest: {tool_call['args']['period_of_interest']}
+                A bounding box could not be obtained for the region argument. Ask the user to manually enter the values ​​in the format [min_lon, min_lat, max_lon, max_lat].
                 """
                 feedback_message = {"role": "system", "content": sys_message}
                 return Command(goto=CHATBOT, update={"messages": rem_msg + [feedback_message]})
@@ -66,11 +75,11 @@ def spi_notebook_creation_tool_validator(state: State) -> Command[Literal[CHATBO
     elif not is_region_specified:
         rem_msg = [RemoveMessage(id=tool_message.id)]
         sys_message = f"""
-            L\'utente a rihiesto di eseguire il tool {tool_call["name"]} con  questi argomenti:
-            - region: NULL
-            - period_of_interest: {tool_call['args']['reference_period'] if is_reference_period_specified else "NULL"}
-            - period_of_interest: {tool_call['args']['period_of_interest'] if is_period_of_interest_specified else "NULL"}
-            Non ha specificato la region. Chiedigliela.
+        The user is asked to run the tool {tool_call["name"]} with these arguments:
+        - region: NULL
+        - period_of_interest: {tool_call['args']['reference_period'] if is_reference_period_specified else "NULL"}
+        - period_of_interest: {tool_call['args']['period_of_interest'] if is_period_of_interest_specified else "NULL"}
+        He did not specify the region. Ask him.
         """
         feedback_message = {"role": "system", "content": sys_message}
         return Command(goto=CHATBOT, update={"messages": rem_msg + [feedback_message]})
@@ -78,11 +87,11 @@ def spi_notebook_creation_tool_validator(state: State) -> Command[Literal[CHATBO
     elif not is_reference_period_specified:
         rem_msg = [RemoveMessage(id=tool_message.id)]
         sys_message = f"""
-            L\'utente a rihiesto di eseguire il tool {tool_call["name"]} con  questi argomenti:
-            - region: {tool_call['args']['region'] if is_region_specified else "NULL"}
-            - reference_period: NULL
-            - period_of_interest: {tool_call['args']['period_of_interest'] if is_period_of_interest_specified else "NULL"}
-            Non ha specificato il periodo di riferimento. Chiedigli se vuole usare l'intervallo 1980-2010 di deafult oppure preferisce specificarlo.
+        The user is asked to run the tool {tool_call["name"]} with these arguments:
+        - region: {tool_call['args']['region'] if is_region_specified else "NULL"}
+        - reference_period: NULL
+        - period_of_interest: {tool_call['args']['period_of_interest'] if is_period_of_interest_specified else "NULL"}
+        He did not specify the reference period. Ask him if he wants to use the default 1980-2010 range or if he prefers to specify it.
         """
         feedback_message = {"role": "system", "content": sys_message}
         return Command(goto=CHATBOT, update={"messages": rem_msg + [feedback_message]})
@@ -90,11 +99,11 @@ def spi_notebook_creation_tool_validator(state: State) -> Command[Literal[CHATBO
     elif not is_period_of_interest_specified:
         rem_msg = [RemoveMessage(id=tool_message.id)]
         sys_message = f"""
-            L\'utente a rihiesto di eseguire il tool {tool_call["name"]} con  questi argomenti:
-            - region: {tool_call['args']['region'] if is_region_specified else "NULL"}
-            - reference_period: {tool_call['args']['reference_period'] if is_reference_period_specified else "NULL"}
-            - period_of_interest: NULL
-            Non ha specificato il periodo di interesse. Chiedigli se vuole usare l'intervallo di default (il mese precedente alla data corrente) oppure preferisce specificarlo.
+        The user is asked to run the tool {tool_call["name"]} with these arguments:
+        - region: {tool_call['args']['region'] if is_region_specified else "NULL"}
+        - reference_period: {tool_call['args']['reference_period'] if is_reference_period_specified else "NULL"}
+        - period_of_interest: NULL
+        He did not specify the period of interest. Ask him if he wants to use the default interval (the month before the current date) or if he prefers to specify it.
         """
         feedback_message = {"role": "system", "content": sys_message}
         return Command(goto=CHATBOT, update={"messages": rem_msg + [feedback_message]})

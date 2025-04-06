@@ -8,6 +8,7 @@ from langgraph.graph import MessagesState
 
 class State(MessagesState):
     """Simple state."""
+    requested_agent: str = None
 
 # @dataclass
 # class State:
