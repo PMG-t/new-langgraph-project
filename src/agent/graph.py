@@ -33,7 +33,7 @@ graph_builder.add_node(spi_notebook_creation_tool_runner)
 graph_builder.add_node(spi_notebook_editor_tool_validator)
 graph_builder.add_node(spi_notebook_editor_tool_runner)
 
-graph_builder.add_node(CDS_INGESTOR_TEMPERATURE_SUBGRAPH, cds_temperature_subgraph)
+graph_builder.add_node(CDS_INGESTOR_FORECAST_SUBGRAPH, cds_temperature_subgraph)
 
 
 # DOC: define edges
@@ -48,7 +48,7 @@ graph_builder.add_edge(SPI_NOTEBOOK_CREATION_TOOL_RUNNER, CHATBOT)
 
 graph_builder.add_edge(SPI_NOTEBOOK_EDITOR_TOOL_RUNNER, CHATBOT)
 
-graph_builder.add_edge(CDS_INGESTOR_TEMPERATURE_SUBGRAPH, CHATBOT)
+graph_builder.add_edge(CDS_INGESTOR_FORECAST_SUBGRAPH, CHATBOT)
 
 # DOC: build graph
 memory = MemorySaver()

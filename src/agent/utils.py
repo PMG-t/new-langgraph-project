@@ -1,6 +1,7 @@
 # DOC: Generic utils
 
 import os
+import sys
 import ast
 import uuid
 import tempfile
@@ -20,8 +21,56 @@ from agent.tools import spi_notebook_creation, spi_notebook_editor
 _temp_dir = os.path.join(tempfile.gettempdir(), 'icisk-chat')
 os.makedirs(_temp_dir, exist_ok=True)
 
+
 def guid():
     return str(uuid.uuid4())
+
+
+def python_path():
+    """ python_path - returns the path to the Python executable """
+    pathname, _ = os.path.split(normpath(sys.executable))
+    return pathname
+
+
+def normpath(pathname):
+    """ normpath - normalizes the path to use forward slashes """
+    if not pathname:
+        return ""
+    return os.path.normpath(pathname.replace("\\", "/")).replace("\\", "/")
+
+
+def juststem(pathname):
+    """ juststem - returns the file name without the extension """
+    pathname = os.path.basename(pathname)
+    root, _ = os.path.splitext(pathname)
+    return root
+
+
+def justpath(pathname, n=1):
+    """ justpath - returns the path without the last n components """
+    for _ in range(n):
+        pathname, _ = os.path.split(normpath(pathname))
+    if pathname == "":
+        return "."
+    return normpath(pathname)
+
+
+def justfname(pathname):
+    """ justfname - returns the basename """
+    return normpath(os.path.basename(normpath(pathname)))
+
+
+def justext(pathname):
+    """ justext - returns the file extension without the dot """
+    pathname = os.path.basename(normpath(pathname))
+    _, ext = os.path.splitext(pathname)
+    return ext.lstrip(".")
+
+def forceext(pathname, newext):
+    """ forceext - replaces the file extension with newext """
+    root, _ = os.path.splitext(normpath(pathname))
+    pathname = root + ("." + newext if len(newext.strip()) > 0 else "")
+    return normpath(pathname)
 
 # ENDREGION: [Generic utils]
 
