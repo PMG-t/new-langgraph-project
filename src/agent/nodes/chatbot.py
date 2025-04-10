@@ -62,7 +62,7 @@ def chatbot(state: State):
                 "{last_message.content}"
 
                 You have the following agents:
-                - {CDS_INGESTOR_FORECAST_SUBGRAPH}: This agent is responsible for helping to get climate data from the CDS (Climate Data Store) via Jupyter notebooks and to edit relatated python code.
+                - {CDS_INGESTOR_FORECAST_SUBGRAPH}: This agent is responsible for helping to get climate data from the CDS (Climate Data Store) via Jupyter notebooks and generate or edit relatated python code.
             
                 If the user request is related to a task that these agents can handle, respond with the name of the agent and nothing else.
                 Otherwise, respond with 'None' and nothing else.

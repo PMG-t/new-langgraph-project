@@ -138,5 +138,14 @@ def build_tool_message(message_id, tool_name, tool_args):
     )
     return tool_message
     
+def tool_response_message(tool_call_id, tool_name, tool_result):
+    message = {
+        "role": "tool",
+        "name": tool_name,
+        "content": tool_result,
+        "tool_call_id": tool_call_id,
+    }
+    return message
+    
 # ENDREGION: [Message utils funtion]
     
