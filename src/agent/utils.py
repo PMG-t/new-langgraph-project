@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 import ast
 import uuid
 import tempfile
@@ -72,6 +73,32 @@ def forceext(pathname, newext):
     pathname = root + ("." + newext if len(newext.strip()) > 0 else "")
     return normpath(pathname)
 
+def try_default(f, default_value=None):
+    """ try_default - returns the value if it is not None, otherwise returns default_value """
+    try:
+        value = f()
+        return value
+    except Exception as e:
+        return default_value
+    
+    
+def safe_code_lines(code, format_dict=None):
+    if format_dict is not None:
+        code = code.format(**format_dict)
+    lines = code.split('\n')
+    if len(lines) > 0:
+        while lines[0] == '':
+            lines = lines[1:]
+        while lines[-1] == '':
+            lines = lines[:-1]
+        spaces = re.match(r'^\s*', lines[0])
+        spaces = len(spaces.group()) if spaces else 0
+        lines = [line[spaces:] for line in lines]
+        lines = [f'{line}\n' if idx!=len(lines)-1 else f'{line}' for idx,line in enumerate(lines)]
+    code = ''.join(lines)
+    return code
+    
+
 # ENDREGION: [Generic utils]
 
 
@@ -81,8 +108,8 @@ def forceext(pathname, newext):
 _tools = [
     # demo_get_precipitation_data,      # INFO: demo tool
     
-    spi_notebook_creation,            # INFO: spi tool
-    spi_notebook_editor,              # INFO: spi tool
+    # spi_notebook_creation,            # INFO: spi tool
+    # spi_notebook_editor,              # INFO: spi tool
 ]
 
 _base_llm = ChatOpenAI(model="gpt-4o-mini")
@@ -109,7 +136,7 @@ def is_human_message(message):
     return message.type == 'human'
 
 def last_human_message(state):
-    if 'messages' in state and len(state['messages'])    > 0:
+    if 'messages' in state and len(state['messages']) > 0:
         recent_messages = state['messages'][::-1]
         for message in recent_messages:
             if is_human_message(message):
