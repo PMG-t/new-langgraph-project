@@ -1,12 +1,8 @@
 import os
-import re
-import json 
 import datetime
 from enum import Enum
 
 from typing import Optional
-from langchain_core.tools import BaseTool
-from langchain_core.tools.base import ArgsSchema
 from pydantic import BaseModel, Field
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
@@ -15,13 +11,13 @@ from langchain_core.callbacks import (
 
 from agent import utils
 from agent.names import *
-from agent.tools import AgentTool
+from agent.tools import BaseAgentTool
 
 import nbformat as nbf
 
 
 # DOC: This is a tool that exploits I-Cisk API to ingests forecast data from the Climate Data Store (CDS) API and saves it in a zarr format. It build a jupyter notebook to do that.
-class CDSIngestorForecastTool(AgentTool):
+class CDSIngestorForecastTool(BaseAgentTool):
     
     
     # DOC: CDS Variable names
@@ -157,7 +153,7 @@ class CDSIngestorForecastTool(AgentTool):
             ],
             'zarr_output': [
                 lambda **ka: f"Invalid output path: {ka['zarr_output']}. It should be a valid zarr file path."
-                    if ka['zarr_output'] is not None and not ka['zarr_output'].endswith('.zarr') else None
+                    if ka['zarr_output'] is not None and not ka['zarr_output'].lower().endswith('.zarr') else None
             ]
         }
         

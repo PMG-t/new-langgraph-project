@@ -1,12 +1,6 @@
 import os
-import re
-import json 
-import datetime
-from enum import Enum
 
 from typing import Optional
-from langchain_core.tools import BaseTool
-from langchain_core.tools.base import ArgsSchema
 from pydantic import BaseModel, Field
 from langchain_core.callbacks import (
     AsyncCallbackManagerForToolRun,
@@ -15,15 +9,14 @@ from langchain_core.callbacks import (
 
 from agent import utils
 from agent.names import *
-from agent.tools import AgentTool, ToolInterrupt
+from agent.tools import BaseAgentTool
 
 import nbformat as nbf
 from nbformat.v4 import new_code_cell
 
 
 
-
-class CDSForecastIngestorCodeEditorTool(AgentTool):
+class CDSForecastIngestorCodeEditorTool(BaseAgentTool):
     
     class InputSchema(BaseModel):  # TODO: Better description
         
