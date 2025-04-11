@@ -123,6 +123,7 @@ class CDSIngestorForecastTool(BaseAgentTool):
             args_schema = CDSIngestorForecastTool.InputSchema,
             **kwargs
         )
+        self.output_confirmed = True    # INFO: There is already the execution_confirmed:True
         
     
     # DOC: Validation rules ( i.e.: valid init and lead time ... ) 

@@ -49,6 +49,8 @@ class CDSForecastIngestorCodeEditorTool(BaseAgentTool):
             args_schema = CDSForecastIngestorCodeEditorTool.InputSchema,
             **kwargs
         )
+        
+        self.execution_confirmed = True     # INFO: Skip this, there will be output_confirmed:True
     
     
     def _set_args_validation_rules(self):
@@ -132,8 +134,6 @@ class CDSForecastIngestorCodeEditorTool(BaseAgentTool):
         code_request: None | str | list[str],
         run_manager: None | Optional[CallbackManagerForToolRun] = None
     ) -> dict:
-        
-        self.execution_confirmed = True     # INFO: Skip this, there will be confirm-output-tool-exception
         
         return super()._run(
             tool_args = {
