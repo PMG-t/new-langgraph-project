@@ -113,8 +113,8 @@ class BaseToolInterruptInvalidArgsHandler(BaseToolInterruptHandler):
             {args_description}
             The user was asked to provide other valid arguments for the tool execution.
             The user replied: "{response}".
-            If the user provided valid arguments, respond with a complete dictionary keyed with the all the arguments they provided updated with what the user provided as a value, if any.
-            Reply with only the dictionary and nothing else.
+            If the user provided valid arguments, respond with a complete dictionary string keyed with the all the arguments they provided updated with what the user provided as a value, if any.
+            Reply with only the dictionary string and nothing else.
             """,
             eval_output = True
         ) 
@@ -130,6 +130,10 @@ class BaseToolInterruptInvalidArgsHandler(BaseToolInterruptHandler):
         })
         response = interruption.get('response', 'User did not provide any response.')
         provided_args = self._generate_provided_args(response)
+        
+        print('\n\n')
+        print(f'Provided args: {provided_args}')
+        print('\n\n')
         
         self.tool_message.tool_calls[-1]["args"].update(provided_args)
         

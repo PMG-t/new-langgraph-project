@@ -14,7 +14,7 @@ from agent.states.state import State
 from agent.nodes import chatbot, chatbot_router
 from agent.nodes import demo_get_precipitation_data_tool_validator, demo_get_precipitation_data_tool_runner
 from agent.nodes import spi_notebook_creation_tool_validator, spi_notebook_creation_tool_runner, spi_notebook_editor_tool_validator, spi_notebook_editor_tool_runner
-from agent.nodes import cds_temperature_subgraph
+from agent.nodes import cds_ingestor_subgraph
 
 
 # DOC: define state
@@ -33,7 +33,7 @@ graph_builder.add_node(spi_notebook_creation_tool_runner)
 graph_builder.add_node(spi_notebook_editor_tool_validator)
 graph_builder.add_node(spi_notebook_editor_tool_runner)
 
-graph_builder.add_node(CDS_INGESTOR_FORECAST_SUBGRAPH, cds_temperature_subgraph)
+graph_builder.add_node(CDS_FORECAST_SUBGRAPH, cds_ingestor_subgraph)
 
 
 # DOC: define edges
@@ -48,7 +48,7 @@ graph_builder.add_edge(SPI_NOTEBOOK_CREATION_TOOL_RUNNER, CHATBOT)
 
 graph_builder.add_edge(SPI_NOTEBOOK_EDITOR_TOOL_RUNNER, CHATBOT)
 
-graph_builder.add_edge(CDS_INGESTOR_FORECAST_SUBGRAPH, CHATBOT)
+graph_builder.add_edge(CDS_FORECAST_SUBGRAPH, CHATBOT)
 
 # DOC: build graph
 memory = MemorySaver()

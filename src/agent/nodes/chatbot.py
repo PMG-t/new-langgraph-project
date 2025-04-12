@@ -11,7 +11,7 @@ from agent.names import *
 from agent.states import State
 from agent import utils
 
-from agent.nodes.subgraphs import cds_temperature_subgraph
+from agent.nodes.subgraphs import cds_ingestor_subgraph
 
 
 # DOC: chatbot node
@@ -62,7 +62,7 @@ def chatbot(state: State):
                 "{last_message.content}"
 
                 You have the following agents:
-                - {CDS_INGESTOR_FORECAST_SUBGRAPH}: This agent is responsible for helping to get climate data from the CDS (Climate Data Store) via Jupyter notebooks and generate or edit relatated python code.
+                - {CDS_FORECAST_SUBGRAPH}: This agent is responsible for helping to get climate data from the CDS (Climate Data Store) via Jupyter notebooks and generate or edit relatated python code.
             
                 If the user request is related to a task that these agents can handle, respond with the name of the agent and nothing else.
                 Otherwise, respond with 'None' and nothing else.
@@ -70,13 +70,13 @@ def chatbot(state: State):
                 eval_output = True
             )
             if agent_request is not None:
-                if agent_request == CDS_INGESTOR_FORECAST_SUBGRAPH:
+                if agent_request == CDS_FORECAST_SUBGRAPH:
                     is_request_classified = True
                     sys_message = f"""You are a MultiAgent AI built to help perform some climate data extraction tasks, leveraging some processes and APIs developed for I-CISK Project.
                         The user asked: "{last_message.content}".
                         The user's request can be fulfilled by the agent {agent_request}.
                         This agent is responsible for helping to get climate data from the CDS (Climate Data Store) via Jupyter notebooks and to edit relatated python code.
-                        Let the user know that you will start the agent "CDS-INGESTOR-FORECAST".
+                        Let the user know that you will start the agent "CDS-FORECAST".
                         """
                     additional_messages.append(SystemMessage(content=sys_message))
                     state_updates["requested_agent"] = agent_request
@@ -92,7 +92,7 @@ def chatbot(state: State):
 
 
 # DOC: chatbot router (conditional edge)
-def chatbot_router(state: State) -> Literal[END, SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR, SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR, CDS_INGESTOR_FORECAST_SUBGRAPH]: # type: ignore
+def chatbot_router(state: State) -> Literal[END, SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR, SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR, CDS_FORECAST_SUBGRAPH]: # type: ignore
     """
     Use in the conditional_edge to route to the ToolNode if the last message has tool calls. Otherwise, route to the end.
     """
@@ -104,8 +104,8 @@ def chatbot_router(state: State) -> Literal[END, SPI_NOTEBOOK_CREATION_TOOL_VALI
         last_message = messages[-1]
         
     if state.get("requested_agent", None) is not None:
-        if state["requested_agent"] == CDS_INGESTOR_FORECAST_SUBGRAPH:
-            next_node = CDS_INGESTOR_FORECAST_SUBGRAPH
+        if state["requested_agent"] == CDS_FORECAST_SUBGRAPH:
+            next_node = CDS_FORECAST_SUBGRAPH
             
     else:
         # TODO: Single tool andrà a scomparire, i tool sono degli agenti, quà si gestisce quale agente chiamare

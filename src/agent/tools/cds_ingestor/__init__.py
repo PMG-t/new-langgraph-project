@@ -1,2 +1,2 @@
-from .cds_ingestor_forecast_tool import CDSIngestorForecastTool
-from .cds_ingestor_forecast_editor_tool import CDSForecastIngestorCodeEditorTool
+from .cds_forecast_notebook_tool import CDSForecastNotebookTool
+from .cds_forecast_editor_tool import CDSForecastCodeEditorTool

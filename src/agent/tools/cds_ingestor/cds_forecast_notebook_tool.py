@@ -17,31 +17,50 @@ import nbformat as nbf
 
 
 # DOC: This is a tool that exploits I-Cisk API to ingests forecast data from the Climate Data Store (CDS) API and saves it in a zarr format. It build a jupyter notebook to do that.
-class CDSIngestorForecastTool(BaseAgentTool):
+class CDSForecastNotebookTool(BaseAgentTool):
     
     
     # DOC: CDS Variable names
     class InputForecastVariable(str, Enum):
     
-        precipitation = "total-precipitation"
+        total_precipitation = "total_precipitation"
         temperature = "temperature"
-        min_temperature = "minimum-temperature"
-        max_temperature = "maximum-temperature"
-        glofas = "glofas" # TODO: give a better name(s)
+        min_temperature = "min_temperature"
+        max_temperature = "max_temperature"
+        glofas = "glofas"
         
         @property
         def as_cds(self) -> str:
             return {
-                'total-precipitation': 'total_precipitation',
+                'total_precipitation': 'total_precipitation',
                 'temperature': '2m_temperature',
             }.get(self.value)
             
         @property
         def as_icisk(self) -> str:
             return {
-                'total-precipitation': 'tp',
+                'total_precipitation': 'tp',
                 'temperature': 't2m',
             }.get(self.value)
+            
+        @classmethod
+        def from_str(cls, alias, raise_error=False):
+            if alias in cls.__members__:
+                return cls[alias]
+            if 'prec' in alias:
+                return cls.total_precipitation
+            if 'min' in alias and 'temp' in alias:
+                return cls.min_temperature
+            if 'max' in alias and 'temp' in alias:
+                return cls.max_temperature
+            if 'temp' in alias:
+                return cls.temperature
+            if 'glofas' in alias:
+                return cls.glofas
+            if raise_error:
+                raise ValueError(f"{alias} is not a valid {cls.__name__} member")
+            return None
+            
         
     
     # DOC: Tool input schema
@@ -49,12 +68,12 @@ class CDSIngestorForecastTool(BaseAgentTool):
         
         forecast_variables: None | list[str] = Field(
             title = "Forecast-Variables",
-            description = "List of forecast variables to be retrieved from the CDS API. If not specified use None as default.",
-            examples   = [
+            description = "List of forecast variables to be retrieved from the CDS API. If not specified use None as default.", 
+            examples = [
                 None,
-                ['total-precipitation'],
-                ['minimum-temperature', 'maximum-temperature'],
-                ['total-precipitation', 'glofas'],
+                ['total_precipitation'],
+                ['min_temperature', 'max_temperature'],
+                ['total_precipitation', 'glofas'],
             ]
         )
         area: None | str | list[float] = Field(
@@ -94,7 +113,7 @@ class CDSIngestorForecastTool(BaseAgentTool):
         )
         zarr_output: None | str = Field(
             title = "Output Zarr File",
-            description = f"The path to the output zarr file with the forecast data. In could be a local path or a remote path. If not specified is None", #'icisk-ai_cds-ingestor-output.zarr' as default.",
+            description = f"The path to the output zarr file with the forecast data. In could be a local path or a remote path. If not specified is None",
             examples = [
                 None,
                 "C:/Users/username/appdata/local/temp/output-<variable>.zarr",
@@ -111,8 +130,8 @@ class CDSIngestorForecastTool(BaseAgentTool):
     # DOC: Initialize the tool with a name, description and args_schema
     def __init__(self, **kwargs):
         super().__init__(
-            name = CDS_INGESTOR_FORECAST_TOOL,
-            description = """Useful when user want to forecast data from the Climate Data Store (CDS) API.
+            name = CDS_FORECAST_NOTEBOOK_TOOL,
+            description = """Useful when user want to get forecast data from the Climate Data Store (CDS) API.
             This tool builds a jupityer notebook to ingests forecast data for a specific region and time period, and saves it in a zarr format.
             It exploits I-CISK APIs to build data retrieval and storage by leveraging these CDS dataset:
             - "Seasonal-Original-Single-Levels" for the seasonal forecast of temperature and precipitation data.
@@ -120,7 +139,7 @@ class CDSIngestorForecastTool(BaseAgentTool):
             This tool returns the path to the output zarr file with the retireved forecast data and an editable jupyter notebook that was used to build the data ingest procedure.
             If not provided by the user, assign the specified default values to the arguments.
             """,
-            args_schema = CDSIngestorForecastTool.InputSchema,
+            args_schema = CDSForecastNotebookTool.InputSchema,
             **kwargs
         )
         self.output_confirmed = True    # INFO: There is already the execution_confirmed:True
@@ -133,8 +152,8 @@ class CDSIngestorForecastTool(BaseAgentTool):
             'forecast_variables' : [
                 lambda **ka: f"Invalid forecast variables: {ka['forecast_variables']}. By now only one variable is supported." 
                     if len(ka['forecast_variables']) > 1 else None,
-                lambda **ka: f"Invalid forecast variables: {[v for v in ka['forecast_variables'] if v not in self.InputForecastVariable._member_names_]}. It should be a list of valid CDS forecast variables: {[self.InputForecastVariable._member_names_]}."
-                    if len([v for v in ka['forecast_variables'] if v not in self.InputForecastVariable._member_names_]) > 0 else None 
+                lambda **ka: f"Invalid forecast variables: {[v for v in ka['forecast_variables'] if self.InputForecastVariable.from_str(v) is None]}. It should be a list of valid CDS forecast variables: {[self.InputForecastVariable._member_names_]}."
+                    if len([v for v in ka['forecast_variables'] if self.InputForecastVariable.from_str(v) is None]) > 0 else None 
             ],
             'area': [
                 lambda **ka: f"Invalid area coordinates: {ka['area']}. It should be a list of 4 float values representing the bounding box [min_x, min_y, max_x, max_y]." 
@@ -162,6 +181,11 @@ class CDSIngestorForecastTool(BaseAgentTool):
     # DOC: Inference rules ( i.e.: from location name to bbox ... )
     def _set_args_inference_rules(self) -> dict:
         
+        def infer_forecast_variables(**ka):
+            def alias_to_enum(forecast_variables):
+                return [self.InputForecastVariable.from_str(fc_var, raise_error=True) for fc_var in forecast_variables]
+            return alias_to_enum(ka['forecast_variables'])
+        
         def infer_area(**ka):
             def bounding_box_from_location_name(area):
                 if type(area) is str:
@@ -176,10 +200,11 @@ class CDSIngestorForecastTool(BaseAgentTool):
         
         def infer_zarr_output(**ka):
             if ka['zarr_output'] is None:
-                return f"icisk-ai_cds-ingestor-forecast_{ka['forecast_variables'][0]}_{datetime.datetime.now().isoformat(timespec='seconds').replace(':','-')}.zarr"
+                return f"icisk-ai_cds-forecast_{ka['forecast_variables'][0]}_{datetime.datetime.now().isoformat(timespec='seconds').replace(':','-')}.zarr"
             return ka['zarr_output']
         
         return {
+            'forecast_variables': infer_forecast_variables,
             'area': infer_area,
             'zarr_output': infer_zarr_output
         }
@@ -354,7 +379,7 @@ class CDSIngestorForecastTool(BaseAgentTool):
     # DOC: Execute the tool → Build notebook, write it to a file and return the path to the notebook and the zarr output file
     def _execute(
         self,
-        forecast_variables: list[InputForecastVariable],
+        forecast_variables: list[str],
         area: str | list[float],
         init_time: str,
         lead_time: str,
@@ -386,7 +411,7 @@ class CDSIngestorForecastTool(BaseAgentTool):
     # DOC: Try running AgentTool → Will check required, validity and inference over arguments thatn call and return _execute()
     def _run(
         self, 
-        forecast_variables: list[InputForecastVariable],
+        forecast_variables: list[str],
         area: str | list[float],
         init_time: str,
         lead_time: str,

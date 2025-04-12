@@ -16,7 +16,7 @@ from nbformat.v4 import new_code_cell
 
 
 
-class CDSForecastIngestorCodeEditorTool(BaseAgentTool):
+class CDSForecastCodeEditorTool(BaseAgentTool):
     
     class InputSchema(BaseModel):  # TODO: Better description
         
@@ -44,9 +44,9 @@ class CDSForecastIngestorCodeEditorTool(BaseAgentTool):
     
     def __init__(self, **kwargs):
         super().__init__(
-            name = CDS_INGESTOR_FORECAST_CODE_EDITOR_TOOL,
-            description = """Useful when user want to edit the code of a notebook regarding CDS forecast data ingestor tool.""",
-            args_schema = CDSForecastIngestorCodeEditorTool.InputSchema,
+            name = CDS_FORECAST_CODE_EDITOR_TOOL,
+            description = """Useful when user want to edit the code of a notebook regarding CDS forecast data tool.""",
+            args_schema = CDSForecastCodeEditorTool.InputSchema,
             **kwargs
         )
         

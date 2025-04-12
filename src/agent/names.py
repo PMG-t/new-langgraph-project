@@ -35,22 +35,12 @@ SPI_NOTEBOOK_EDITOR_TOOL_RUNNER = "spi_notebook_editor_tool_runner"
 
 CDS_CHATBOT = "cds_chatbot"
 
-CDS_INGESTOR_FORECAST_SUBGRAPH = "cds_temperature_subgraph"
+CDS_FORECAST_SUBGRAPH = "cds_forecast_subgraph"
 
-CDS_INGESTOR_FORECAST_TOOL = "cds_ingestor_forecast_tool"
-CDS_INGESTOR_FORECAST_CODE_EDITOR_TOOL = "cds_ingestor_forecast_code_editor_tool"
+CDS_FORECAST_NOTEBOOK_TOOL = "cds_forecast_notebook_tool"
+CDS_FORECAST_CODE_EDITOR_TOOL = "cds_forecast_code_editor_tool"
 
-# START OLD:
-CDS_INGESTOR_TEMPERATURE = "cds_temperature"
-CDS_INGESTOR_FORECAST_TOOL_HANDLER = "cds_forecast_tool_handler"
-CDS_INGESTOR_FORECAST_CODE_EDITOR_TOOL_HANDLER = "cds_forecast_code_editor_tool_handler"
+CDS_FORECAST_TOOL_HANDLER = "cds_forecast_tool_handler"
 CDS_FORECAST_TOOL_INTERRUPT = "cds_forecast_tool_interrupt"
-CDS_INGESTOR_FORECAST_TOOL_HANDLE_REGION = "cds_forecast_tool_handle_region"
-CDS_INGESTOR_FORECAST_TOOL_HANDLE_INIT_TIME = "cds_forecast_tool_handle_init_time"
-CDS_INGESTOR_FORECAST_TOOL_HANDLE_LEAD_TIME = "cds_forecast_tool_handle_lead_time"
-CDS_INGESTOR_FORECAST_TOOL_HANDLE_ZARR_OUTPUT_FILE = "cds_forecast_tool_handle_zarr_output_file"
-CDS_INGESTOR_FORECAST_TOOL_RUNNER = "cds_forecast_tool_runner"
-
-# END OLD
 
 # ENDREGION: [CDS Forecast]
