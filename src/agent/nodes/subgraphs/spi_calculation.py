@@ -46,28 +46,6 @@ def spi_chatbot(state: SPIState) -> Command[Literal[END, SPI_CALCULATION_TOOL_HA
     return Command(goto=END, update = { "messages": [ ai_message ], "requested_agent": None, "nodes_params": dict() })
 
 
-# # DOC: SPI chatbot-router [NODE]
-# def spi_chatbot_router(state: SPIState) -> Literal[END, SPI_CALCULATION_TOOL_HANDLER]:     # type: ignore
-#     """
-#     Use in the conditional_edge to route to the ToolNode if the last message has tool calls. Otherwise, route to the end.
-#     """
-    
-#     next_node = END
-#     if isinstance(state, list):
-#         ai_message = state[-1]
-#     elif messages := state.get("messages", []):
-#         ai_message = messages[-1]
-#     else:
-#         raise ValueError(f"No messages found in input state to tool_edge: {state}")
-    
-#     print(f'\n\n\n TOOL CALLS {ai_message.tool_calls} \n\n\n')
-    
-#     if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
-#         next_node = SPI_CALCULATION_TOOL_HANDLER
-    
-#     return next_node
-
-
 
 # DOC: Base tool handler: runs the tool, if tool interrupt go to interrupt node handler
 spi_calculation_tool_handler = BaseToolHandlerNode(
@@ -101,7 +79,6 @@ spi_calculation_graph_builder.add_node(SPI_CALCULATION_TOOL_INTERRUPT, spi_calcu
 
 # DOC: Edges
 spi_calculation_graph_builder.add_edge(START, SPI_CHATBOT)
-# spi_calculation_graph_builder.add_conditional_edges(SPI_CHATBOT, spi_chatbot_router)
 
 # DOC: Compile
 spi_calculation_subgraph = spi_calculation_graph_builder.compile()

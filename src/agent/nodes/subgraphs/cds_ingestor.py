@@ -37,10 +37,6 @@ class CDSState(State):
         
 
 # DOC: CDS chatbot [NODE]
-# def cds_chatbot(state: CDSState):
-#     ai_message = llm_with_cds_tools.invoke(state["messages"])
-#     return {"messages": [ai_message]}
-
 def cds_chatbot(state: CDSState) -> Command[Literal[END, CDS_FORECAST_TOOL_HANDLER]]:   # type: ignore
     ai_message = llm_with_cds_tools.invoke(state["messages"])
     
@@ -48,28 +44,6 @@ def cds_chatbot(state: CDSState) -> Command[Literal[END, CDS_FORECAST_TOOL_HANDL
         return Command( goto = CDS_FORECAST_TOOL_HANDLER, update = { "messages": [ ai_message ] } )
 
     return Command(goto=END, update = { "messages": [ ai_message ], "requested_agent": None, "nodes_params": dict() })
-
-
-# DOC: CDS chatbot-router [NODE]
-# def cds_chatbot_router(state: CDSState) -> Literal[END, CDS_FORECAST_TOOL_HANDLER]:     # type: ignore
-#     """
-#     Use in the conditional_edge to route to the ToolNode if the last message has tool calls. Otherwise, route to the end.
-#     """
-    
-#     next_node = END
-#     if isinstance(state, list):
-#         ai_message = state[-1]
-#     elif messages := state.get("messages", []):
-#         ai_message = messages[-1]
-#     else:
-#         raise ValueError(f"No messages found in input state to tool_edge: {state}")
-    
-#     print(f'\n\n\n TOOL CALLS {ai_message.tool_calls} \n\n\n')
-    
-#     if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
-#         next_node = CDS_FORECAST_TOOL_HANDLER
-        
-#     return next_node
 
 
 
@@ -105,7 +79,6 @@ cds_ingestor_graph_builder.add_node(CDS_FORECAST_TOOL_INTERRUPT, cds_forecast_to
 
 # DOC: Edges
 cds_ingestor_graph_builder.add_edge(START, CDS_CHATBOT)
-# cds_ingestor_graph_builder.add_conditional_edges(CDS_CHATBOT, cds_chatbot_router)
 
 # DOC: Compile
 cds_ingestor_subgraph = cds_ingestor_graph_builder.compile()
