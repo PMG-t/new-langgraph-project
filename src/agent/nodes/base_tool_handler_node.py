@@ -58,10 +58,6 @@ class BaseToolHandlerNode:
             tool_message = state["messages"][-1]
             tool_call = tool_message.tool_calls[-1]
             
-            print('\n\n\n')
-            print('tool_call', tool_call)
-            print('\n\n\n')
-            
             result = None
             try:
                 result = self.tools[tool_call['name']].invoke(tool_call['args'])

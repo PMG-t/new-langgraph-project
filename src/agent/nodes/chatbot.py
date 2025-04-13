@@ -11,8 +11,6 @@ from agent.names import *
 from agent.states import State
 from agent import utils
 
-from agent.nodes.subgraphs import cds_ingestor_subgraph
-
 
 # DOC: chatbot node
 def chatbot(state: State):
@@ -52,7 +50,6 @@ def chatbot(state: State):
                 )
                 additional_messages.append(sys_message)
         
-        if not is_request_classified:
             agent_request = utils.ask_llm(
                 role = 'system',
                 message = f"""You are a multi-agent AI, and you are currently in a routing state following user input.
@@ -121,14 +118,5 @@ def chatbot_router(state: State) -> Literal[END, CDS_FORECAST_SUBGRAPH, SPI_CALC
         elif state["requested_agent"] == SPI_CALCULATION_SUBGRAPH:
             next_node = SPI_CALCULATION_SUBGRAPH
             
-    # else:
-    #     # TODO: Single tool andrà a scomparire, i tool sono degli agenti, quà si gestisce quale agente chiamare
-    #     if hasattr(last_message, "tool_calls") and len(last_message.tool_calls) > 0:
-    #         # INFO: Check which tool is called (Only implementing first tool call) -> maybe next we can have a for-loop to handle each tool iteratively
-    #         tool_calls = last_message.tool_calls
-    #         if tool_calls[0]['name'] == SPI_NOTEBOOK_CREATION:
-    #             next_node = SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR
-    #         if tool_calls[0]['name'] == SPI_NOTEBOOK_EDITOR:
-    #             next_node = SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR
     
     return next_node

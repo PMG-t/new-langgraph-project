@@ -11,10 +11,14 @@ from agent.names import *
 from agent.configuration import Configuration
 from agent.states.state import State
 
-from agent.nodes import chatbot, chatbot_router
-from agent.nodes import demo_get_precipitation_data_tool_validator, demo_get_precipitation_data_tool_runner
-from agent.nodes import spi_notebook_creation_tool_validator, spi_notebook_creation_tool_runner, spi_notebook_editor_tool_validator, spi_notebook_editor_tool_runner
-from agent.nodes import cds_ingestor_subgraph, spi_calculation_subgraph
+from agent.nodes import (
+    chatbot, 
+    chatbot_router,
+    
+    cds_ingestor_subgraph, 
+    
+    spi_calculation_subgraph
+)
 
 
 # DOC: define state
@@ -25,30 +29,15 @@ graph_builder = StateGraph(State)
 
 graph_builder.add_node(chatbot)
 
-# graph_builder.add_node(demo_get_precipitation_data_tool_validator)
-# graph_builder.add_node(demo_get_precipitation_data_tool_runner)
-
-# graph_builder.add_node(spi_notebook_creation_tool_validator)
-# graph_builder.add_node(spi_notebook_creation_tool_runner)
-# graph_builder.add_node(spi_notebook_editor_tool_validator)
-# graph_builder.add_node(spi_notebook_editor_tool_runner)
-
 graph_builder.add_node(CDS_FORECAST_SUBGRAPH, cds_ingestor_subgraph)
 
 graph_builder.add_node(SPI_CALCULATION_SUBGRAPH, spi_calculation_subgraph)
 
 
 # DOC: define edges
-# graph_builder.add_conditional_edges(START, request_classifier)
 
 graph_builder.add_edge(START, CHATBOT)
 graph_builder.add_conditional_edges(CHATBOT, chatbot_router)
-
-# graph_builder.add_edge(DEMO_GET_PRECIPITATION_DATA_TOOL_RUNNER, CHATBOT)
-
-# graph_builder.add_edge(SPI_NOTEBOOK_CREATION_TOOL_RUNNER, CHATBOT)
-
-# graph_builder.add_edge(SPI_NOTEBOOK_EDITOR_TOOL_RUNNER, CHATBOT)
 
 graph_builder.add_edge(CDS_FORECAST_SUBGRAPH, CHATBOT)
 
