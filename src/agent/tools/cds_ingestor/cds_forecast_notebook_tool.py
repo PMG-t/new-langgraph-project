@@ -71,14 +71,16 @@ class CDSForecastNotebookTool(BaseAgentTool):
             examples = [
                 None,
                 ['total_precipitation'],
-                ['min_temperature', 'max_temperature'],
-                ['total_precipitation', 'glofas'],
+                ['temperature'],
+                ['glofas']
+                # ['min_temperature', 'max_temperature'],
+                # ['total_precipitation', 'glofas'],
             ]
         )
         area: None | str | list[float] = Field(
             title = "Area",
             description = """The area of interest for the forecast data. If not specified use None as default.
-            It   could be a bouning-box defined by [min_x, min_y, max_x, max_y] coordinates provided in EPSG:4326 Coordinate Reference System.
+            It could be a bouning-box defined by [min_x, min_y, max_x, max_y] coordinates provided in EPSG:4326 Coordinate Reference System.
             Otherwise it can be the name of a country, continent, or specific geographic area.""",
             examples=[
                 None,

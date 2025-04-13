@@ -169,8 +169,8 @@ class BaseToolInterruptArgsConfirmationHandler(BaseToolInterruptHandler):
             Below there is a list with provided arguments and their values:
             {args_value}
             The user replied: "{response}".
-            If the user provided some updates respond with a complete dictionary keyed with all the arguments they provided updated with what the user requested or provided as a value, if any.
-            Reply with only the dictionary and nothing else.
+            If the user provided some updates respond with a complete dictionary string keyed with all the arguments they provided updated with what the user requested or provided as a value, if any.
+            Reply with only the dictionary string and nothing else.
             If the user asked to interrupt the tool process and exit, return None and nothing else.
             """,
             eval_output = True

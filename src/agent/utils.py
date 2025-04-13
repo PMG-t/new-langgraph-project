@@ -125,9 +125,11 @@ def ask_llm(role, message, llm=_base_llm, eval_output=False):
 
 # REGION: [Message utils funtion]
 
-class InterruptType:
-    CLARIFICATION = "clarification"
-    CONFIRMATION = "confirmation"
+def is_ai_message(message):
+    return message.type == 'ai'
+
+def is_system_message(message):
+    return message.type == 'system'
 
 def is_human_message(message):
     return message.type == 'human'
