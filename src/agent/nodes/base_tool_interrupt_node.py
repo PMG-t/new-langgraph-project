@@ -144,7 +144,7 @@ class BaseToolInterruptInvalidArgsHandler(BaseToolInterruptHandler):
             }
         }
         
-        
+                
 class BaseToolInterruptArgsConfirmationHandler(BaseToolInterruptHandler):
     
     def _generate_interrupt_message(self):
@@ -354,7 +354,7 @@ class BaseToolInterruptNode:
             tool = self.tools[tool_name]
             
             # DOC: OP.1 — i.e. BaseToolInterruptProvideArgsHandler.handle() -> _generate_interrupt_message > _generate_provided_args > _update_tool_message > return Command(goto=tool_handler_node, update={'messages' [tool_message]}
-            # DOC: OP:2 — i.e. A generic class with handle method that return {'goto': node-name, 'update': state}
+            # DOC: OP.2 — i.e. A generic class with handle method that return {'goto': node-name, 'update': state}
             command = self.tool_interupt_handlers[tool_interrupt['type']].handle(tool, interrupt_data)
             
             next_node = command['goto']

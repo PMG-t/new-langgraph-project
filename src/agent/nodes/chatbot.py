@@ -63,6 +63,7 @@ def chatbot(state: State):
 
                 You have the following agents:
                 - {CDS_FORECAST_SUBGRAPH}: This agent is responsible for helping to get climate data from the CDS (Climate Data Store) via Jupyter notebooks and generate or edit relatated python code.
+                - {SPI_CALCULATION_SUBGRAPH}: This agent is responsible for helping to calculate the SPI (Standardized Precipitation Index) using the provided data and building a jupyter notebook for visualization.
             
                 If the user request is related to a task that these agents can handle, respond with the name of the agent and nothing else.
                 Otherwise, respond with 'None' and nothing else.
@@ -80,6 +81,17 @@ def chatbot(state: State):
                         """
                     additional_messages.append(SystemMessage(content=sys_message))
                     state_updates["requested_agent"] = agent_request
+                    
+                elif agent_request == SPI_CALCULATION_SUBGRAPH:
+                    is_request_classified = True
+                    sys_message = f"""You are a MultiAgent AI built to help perform some climate data extraction tasks, leveraging some processes and APIs developed for I-CISK Project.
+                        The user asked: "{last_message.content}".
+                        The user's request can be fulfilled by the agent {agent_request}.
+                        This agent is responsible for helping to calculate the SPI (Standardized Precipitation Index) using the provided data and building a jupyter notebook for visualization.
+                        Let the user know that you will start the agent "SPI-CALCULATION".
+                        """
+                    additional_messages.append(SystemMessage(content=sys_message))
+                    state_updates["requested_agent"] = agent_request
             
     if state_updates.get("requested_agent", None) is not None:
         state_updates["messages"] = [SystemMessage(content=f'The users made this request: "{last_message.content}". Run required tool if needed.')]
@@ -92,7 +104,7 @@ def chatbot(state: State):
 
 
 # DOC: chatbot router (conditional edge)
-def chatbot_router(state: State) -> Literal[END, SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR, SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR, CDS_FORECAST_SUBGRAPH]: # type: ignore
+def chatbot_router(state: State) -> Literal[END, CDS_FORECAST_SUBGRAPH, SPI_CALCULATION_SUBGRAPH]: # type: ignore
     """
     Use in the conditional_edge to route to the ToolNode if the last message has tool calls. Otherwise, route to the end.
     """
@@ -106,15 +118,17 @@ def chatbot_router(state: State) -> Literal[END, SPI_NOTEBOOK_CREATION_TOOL_VALI
     if state.get("requested_agent", None) is not None:
         if state["requested_agent"] == CDS_FORECAST_SUBGRAPH:
             next_node = CDS_FORECAST_SUBGRAPH
+        elif state["requested_agent"] == SPI_CALCULATION_SUBGRAPH:
+            next_node = SPI_CALCULATION_SUBGRAPH
             
-    else:
-        # TODO: Single tool andrà a scomparire, i tool sono degli agenti, quà si gestisce quale agente chiamare
-        if hasattr(last_message, "tool_calls") and len(last_message.tool_calls) > 0:
-            # INFO: Check which tool is called (Only implementing first tool call) -> maybe next we can have a for-loop to handle each tool iteratively
-            tool_calls = last_message.tool_calls
-            if tool_calls[0]['name'] == SPI_NOTEBOOK_CREATION:
-                next_node = SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR
-            if tool_calls[0]['name'] == SPI_NOTEBOOK_EDITOR:
-                next_node = SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR
+    # else:
+    #     # TODO: Single tool andrà a scomparire, i tool sono degli agenti, quà si gestisce quale agente chiamare
+    #     if hasattr(last_message, "tool_calls") and len(last_message.tool_calls) > 0:
+    #         # INFO: Check which tool is called (Only implementing first tool call) -> maybe next we can have a for-loop to handle each tool iteratively
+    #         tool_calls = last_message.tool_calls
+    #         if tool_calls[0]['name'] == SPI_NOTEBOOK_CREATION:
+    #             next_node = SPI_NOTEBOOK_CREATION_TOOL_VALIDATOR
+    #         if tool_calls[0]['name'] == SPI_NOTEBOOK_EDITOR:
+    #             next_node = SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR
     
     return next_node

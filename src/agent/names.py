@@ -31,6 +31,20 @@ SPI_NOTEBOOK_EDITOR = "spi_notebook_editor"
 SPI_NOTEBOOK_EDITOR_TOOL_VALIDATOR = "spi_notebook_editor_tool_validator"
 SPI_NOTEBOOK_EDITOR_TOOL_RUNNER = "spi_notebook_editor_tool_runner"
 
+# REGION: [SPI Calculation]
+
+SPI_CHATBOT = "spi_chatbot"
+
+SPI_CALCULATION_SUBGRAPH = "spi_calculation_subgraph"
+
+SPI_CALCULATION_NOTEBOOK_TOOL = "spi_calculation_notebook_tool"
+SPI_CALCULATION_CODE_EDITOR_TOOL = "spi_calculation_code_editor_tool"
+
+SPI_CALCULATION_TOOL_HANDLER = "spi_calculation_tool_handler"
+SPI_CALCULATION_TOOL_INTERRUPT = "spi_calculation_tool_interrupt"
+
+# ENDREGION: [SPI Calculation]
+
 # REGION: [CDS Forecast]
 
 CDS_CHATBOT = "cds_chatbot"

@@ -20,3 +20,4 @@ from .spi_notebook_creation import spi_notebook_creation_tool_validator, spi_not
 from .spi_notebook_editor import spi_notebook_editor_tool_validator, spi_notebook_editor_tool_runner
 
 from .subgraphs import cds_ingestor_subgraph
+from .subgraphs import spi_calculation_subgraph

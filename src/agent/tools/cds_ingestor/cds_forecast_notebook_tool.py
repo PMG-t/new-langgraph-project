@@ -60,8 +60,7 @@ class CDSForecastNotebookTool(BaseAgentTool):
             if raise_error:
                 raise ValueError(f"{alias} is not a valid {cls.__name__} member")
             return None
-            
-        
+                 
     
     # DOC: Tool input schema
     class InputSchema(BaseModel):
@@ -195,6 +194,7 @@ class CDSForecastNotebookTool(BaseAgentTool):
                         Provide only the coordinates list without any additional text or explanation.""",
                         eval_output = True
                     )
+                    self.execution_confirmed = False
                 return area
             return bounding_box_from_location_name(ka['area'])
         

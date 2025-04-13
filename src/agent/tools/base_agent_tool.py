@@ -80,13 +80,15 @@ class BaseAgentTool(BaseTool):
     def _set_args_inference_rules(self):
         return { arg: None for arg in self.args_schema.model_fields.keys() }
     
-    def infer_and_confirm_args(self, tool_args): 
+    def infer_args(self, tool_args):
         args_inference_rules = self._set_args_inference_rules()
-        
         for arg in self.args_schema.model_fields.keys():
             if arg in args_inference_rules and args_inference_rules[arg] is not None:
                 tool_args[arg] = args_inference_rules[arg](**tool_args)
-                
+    
+    
+    # DOC: Confirm args if needed 
+    def confirm_args(self, tool_args): 
         if not self.execution_confirmed:
             raise ToolInterrupt(
                 interrupt_tool = self.name,
@@ -127,14 +129,15 @@ class BaseAgentTool(BaseTool):
         def controls_before_execution(tool_args):
             self.check_required_args(tool_args)         # 1. Required arguments
             self.check_validation_rules(tool_args)      # 2. Invalid arguments
-            self.infer_and_confirm_args(tool_args)      # 3. Infer and confirm arguments
+            self.infer_args(tool_args)                  # 3. Infer arguments)
+            self.confirm_args(tool_args)                # 4. Confirm arguments
             
         controls_before_execution(tool_args)
         
         self.output = self._execute(**tool_args)
         
         def controls_after_execution(tool_args):
-            self.confirm_ouputs(tool_args)              # 4. Confirm output
+            self.confirm_ouputs(tool_args)              # 5. Confirm output
         
         controls_after_execution(tool_args)
         

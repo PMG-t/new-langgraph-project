@@ -10,3 +10,8 @@ from .cds_ingestor import (
     CDSForecastNotebookTool,
     CDSForecastCodeEditorTool
 )
+
+from .spi_calculation import (
+    SPICalculationNotebookTool,
+    SPICalculationCodeEditorTool
+)

@@ -1,1 +1,2 @@
 from .cds_ingestor import cds_ingestor_subgraph
+from .spi_calculation import spi_calculation_subgraph
