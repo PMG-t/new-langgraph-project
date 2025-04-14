@@ -102,21 +102,18 @@ def safe_code_lines(code, format_dict=None):
 
 # REGION: [LLM and Tools]
 
-_tools = [
-    # demo_get_precipitation_data,      # INFO: demo tool
-    
-    # spi_notebook_creation,            # INFO: spi tool
-    # spi_notebook_editor,              # INFO: spi tool
-]
-
 _base_llm = ChatOpenAI(model="gpt-4o-mini")
-_llm_with_tools = _base_llm.bind_tools(_tools)
 
 def ask_llm(role, message, llm=_base_llm, eval_output=False):
     llm_out = llm.invoke([{"role": role, "content": message}])
     if eval_output:
-        try: return ast.literal_eval(llm_out.content)
-        except: pass
+        try: 
+            content = llm_out.content
+            if type(content) is str and content.startswith('```python'):
+                content = content.split('```python')[1].split('```')[0]
+            return ast.literal_eval(content)
+        except: 
+            pass
     return llm_out.content
 
 # ENDREGION: [LLM and Tools]

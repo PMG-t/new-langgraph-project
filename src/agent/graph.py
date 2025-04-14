@@ -13,7 +13,7 @@ from agent.states.state import State
 
 from agent.nodes import (
     chatbot, 
-    chatbot_router,
+    # chatbot_router,
     
     cds_ingestor_subgraph, 
     
@@ -37,7 +37,7 @@ graph_builder.add_node(SPI_CALCULATION_SUBGRAPH, spi_calculation_subgraph)
 # DOC: define edges
 
 graph_builder.add_edge(START, CHATBOT)
-graph_builder.add_conditional_edges(CHATBOT, chatbot_router)
+# graph_builder.add_conditional_edges(CHATBOT, chatbot_router)
 
 graph_builder.add_edge(CDS_FORECAST_SUBGRAPH, CHATBOT)
 

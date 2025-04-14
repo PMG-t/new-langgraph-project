@@ -33,18 +33,7 @@ llm_with_cds_tools = utils._base_llm.bind_tools(cds_tools)
 # DOC: This is for store some information that could be util for the nodes in the subgraph. N.B. Keys are node names, values are a custom dict
 class CDSState(State):
     nodes_params: dict
-    
         
-
-# DOC: CDS chatbot [NODE]
-def cds_chatbot(state: CDSState) -> Command[Literal[END, CDS_FORECAST_TOOL_HANDLER]]:   # type: ignore
-    ai_message = llm_with_cds_tools.invoke(state["messages"])
-    
-    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
-        return Command( goto = CDS_FORECAST_TOOL_HANDLER, update = { "messages": [ ai_message ] } )
-
-    return Command(goto=END, update = { "messages": [ ai_message ], "requested_agent": None, "nodes_params": dict() })
-
 
 
 # DOC: Base tool handler: runs the tool, if tool interrupt go to interrupt node handler
@@ -72,13 +61,14 @@ cds_forecast_tool_interrupt = BaseToolInterruptNode(
 cds_ingestor_graph_builder = StateGraph(CDSState)
 
 # DOC: Nodes
-cds_ingestor_graph_builder.add_node(CDS_CHATBOT, cds_chatbot)
+# cds_ingestor_graph_builder.add_node(CDS_CHATBOT, cds_chatbot)
 
 cds_ingestor_graph_builder.add_node(CDS_FORECAST_TOOL_HANDLER, cds_forecast_tool_handler)
 cds_ingestor_graph_builder.add_node(CDS_FORECAST_TOOL_INTERRUPT, cds_forecast_tool_interrupt)
 
 # DOC: Edges
-cds_ingestor_graph_builder.add_edge(START, CDS_CHATBOT)
+# cds_ingestor_graph_builder.add_edge(START, CDS_CHATBOT)
+cds_ingestor_graph_builder.add_edge(START, CDS_FORECAST_TOOL_HANDLER)
 
 # DOC: Compile
 cds_ingestor_subgraph = cds_ingestor_graph_builder.compile()

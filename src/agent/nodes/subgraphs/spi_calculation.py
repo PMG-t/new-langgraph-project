@@ -34,18 +34,7 @@ llm_with_spi_tools = utils._base_llm.bind_tools(spi_tools)
 class SPIState(State):
     nodes_params: dict
     
-        
-
-# DOC: SPI chatbot [NODE]
-def spi_chatbot(state: SPIState) -> Command[Literal[END, SPI_CALCULATION_TOOL_HANDLER]]:   # type: ignore
-    ai_message = llm_with_spi_tools.invoke(state["messages"])
     
-    if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
-        return Command( goto = SPI_CALCULATION_TOOL_HANDLER, update = { "messages": [ ai_message ] } )
-        
-    return Command(goto=END, update = { "messages": [ ai_message ], "requested_agent": None, "nodes_params": dict() })
-
-
 
 # DOC: Base tool handler: runs the tool, if tool interrupt go to interrupt node handler
 spi_calculation_tool_handler = BaseToolHandlerNode(
@@ -72,13 +61,14 @@ spi_calculation_tool_interrupt = BaseToolInterruptNode(
 spi_calculation_graph_builder = StateGraph(SPIState)
 
 # DOC: Nodes
-spi_calculation_graph_builder.add_node(SPI_CHATBOT, spi_chatbot)
+# spi_calculation_graph_builder.add_node(SPI_CHATBOT, spi_chatbot)
 
 spi_calculation_graph_builder.add_node(SPI_CALCULATION_TOOL_HANDLER, spi_calculation_tool_handler)
 spi_calculation_graph_builder.add_node(SPI_CALCULATION_TOOL_INTERRUPT, spi_calculation_tool_interrupt)
 
 # DOC: Edges
-spi_calculation_graph_builder.add_edge(START, SPI_CHATBOT)
+# spi_calculation_graph_builder.add_edge(START, SPI_CHATBOT)
+spi_calculation_graph_builder.add_edge(START, SPI_CALCULATION_TOOL_HANDLER)
 
 # DOC: Compile
 spi_calculation_subgraph = spi_calculation_graph_builder.compile()
