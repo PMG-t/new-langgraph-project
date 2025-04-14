@@ -217,7 +217,7 @@ class BaseToolInterruptOutputConfirmationHandler(BaseToolInterruptHandler):
             {self.tool_interrupt['reason']}
             Below there is the provided outputs:
             {output_description}
-            Ask the user to confirm the output or if he want to modify some values."""
+            Show output to the user and ask him if he wants to confirm it or if he wants to modify some values."""
         )
         return interrupt_message
     

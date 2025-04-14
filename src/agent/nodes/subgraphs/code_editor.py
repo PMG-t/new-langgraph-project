@@ -61,13 +61,10 @@ code_editor_tool_interrupt = BaseToolInterruptNode(
 code_editor_graph_builder = StateGraph(CodeEditorState)
 
 # DOC: Nodes
-# spi_calculation_graph_builder.add_node(SPI_CHATBOT, spi_chatbot)
-
 code_editor_graph_builder.add_node(CODE_EDITOR_TOOL_HANDLER, code_editor_tool_handler)
 code_editor_graph_builder.add_node(CODE_EDITOR_TOOL_INTERRUPT, code_editor_tool_interrupt)
 
 # DOC: Edges
-# spi_calculation_graph_builder.add_edge(START, SPI_CHATBOT)
 code_editor_graph_builder.add_edge(START, CODE_EDITOR_TOOL_HANDLER)
 
 # DOC: Compile

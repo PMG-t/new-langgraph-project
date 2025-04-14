@@ -58,13 +58,11 @@ cds_forecast_tool_interrupt = BaseToolInterruptNode(
 cds_ingestor_graph_builder = StateGraph(CDSState)
 
 # DOC: Nodes
-# cds_ingestor_graph_builder.add_node(CDS_CHATBOT, cds_chatbot)
 
 cds_ingestor_graph_builder.add_node(CDS_FORECAST_TOOL_HANDLER, cds_forecast_tool_handler)
 cds_ingestor_graph_builder.add_node(CDS_FORECAST_TOOL_INTERRUPT, cds_forecast_tool_interrupt)
 
 # DOC: Edges
-# cds_ingestor_graph_builder.add_edge(START, CDS_CHATBOT)
 cds_ingestor_graph_builder.add_edge(START, CDS_FORECAST_TOOL_HANDLER)
 
 # DOC: Compile

@@ -53,7 +53,7 @@ class BaseToolHandlerNode:
         
     def setup(self):
         
-        # DOC: This is a template function that will be used to create the tool handler function.
+        # DOC: This is a template function that will be used to create the tool handler function node.
         def tool_handler_template(state):
             tool_message = state["messages"][-1]
             tool_call = tool_message.tool_calls[-1]
