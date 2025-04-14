@@ -39,10 +39,14 @@ def chatbot(state: State) -> Command[Literal[END, CDS_FORECAST_SUBGRAPH, SPI_CAL
     ai_message = llm_with_tools.invoke(state["messages"])
     
     if hasattr(ai_message, "tool_calls") and len(ai_message.tool_calls) > 0:
-        for tool_call in ai_message.tool_calls:
-            if tool_call['name'] == cds_forecast_notebook_tool.name or tool_call['name'] == cds_forecast_code_editor_tool.name:
-                return Command(goto=CDS_FORECAST_SUBGRAPH, update = { "messages": [ ai_message ] })
-            elif tool_call['name'] == cds_forecast_notebook_tool.name or tool_call['name'] == cds_forecast_code_editor_tool.name:
-                return Command(goto=SPI_CALCULATION_SUBGRAPH, update = { "messages": [ ai_message ] })
+        
+        # DOC: get the first tool call, discard others
+        tool_call = ai_message.tool_calls[0]
+        ai_message.tool_calls = [tool_call] 
+        
+        if tool_call['name'] == cds_forecast_notebook_tool.name or tool_call['name'] == cds_forecast_code_editor_tool.name:
+            return Command(goto=CDS_FORECAST_SUBGRAPH, update = { "messages": [ ai_message ] })
+        elif tool_call['name'] == spi_calculation_notebook_tool.name or tool_call['name'] == spi_calculation_code_editor_tool.name:
+            return Command(goto=SPI_CALCULATION_SUBGRAPH, update = { "messages": [ ai_message ] })
 
     return Command(goto=END, update = { "messages": [ ai_message ], "requested_agent": None, "nodes_params": dict() })

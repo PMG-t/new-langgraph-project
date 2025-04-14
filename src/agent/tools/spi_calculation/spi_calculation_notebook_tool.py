@@ -63,6 +63,17 @@ class SPICalculationNotebookTool(BaseAgentTool):
             ],
             default = tuple( [ (datetime.datetime.now()-dateutil.relativedelta.relativedelta(months=1)).strftime('%Y-%m'), datetime.datetime.now().strftime('%Y-%m') ] )
         )
+        jupyter_notebook: None | str = Field(
+            title = "Jupyter Notebook",
+            description = f"The path to the jupyter notebook that was used to build the data ingest procedure. If not specified is None",
+            examples = [
+                None,
+                "C:/Users/username/appdata/local/temp/output-<variable>.ipynb",
+                "/path/to/output-<variable>-<date>.ipynb",
+                "S3://bucket-name/path/to/<location>-<varibale>-data.ipynb",
+            ],
+            default = None
+        )
         
     
     # DOC: Additional tool args
@@ -107,6 +118,10 @@ class SPICalculationNotebookTool(BaseAgentTool):
                     if datetime.datetime.strptime(ka['period_of_interest'][0], "%Y-%m") >= datetime.datetime.strptime(ka['period_of_interest'][1], "%Y-%m") else None,
                 lambda **ka: f"Invalid period_of_interest: {ka['period_of_interest']}. It can't be mor than six months in the future."
                     if datetime.datetime.strptime(ka['period_of_interest'][1], "%Y-%m") > (datetime.datetime.now() + dateutil.relativedelta.relativedelta(months=6)) else None,
+            ],
+            'jupyter_notebook': [
+                lambda **ka: f"Invalid notebook path: {ka['jupyter_notebook']}. It should be a valid jupyter notebook file path."
+                    if ka['jupyter_notebook'] is not None and not ka['jupyter_notebook'].lower().endswith('.ipynb') else None
             ]
         }
     
@@ -127,14 +142,23 @@ class SPICalculationNotebookTool(BaseAgentTool):
                 return area
             return bounding_box_from_location_name(ka['area'])
         
+        def infer_jupyter_notebook(**ka):
+            if ka['jupyter_notebook'] is None:
+                return f"icisk-ai_spi-calculation_{datetime.datetime.now().isoformat(timespec='seconds').replace(':','-')}.ipynb"
+            return ka['jupyter_notebook']
+        
         return {
             'area': infer_area,
+            'jupyter_notebook': infer_jupyter_notebook
         }
         
     
      # DOC: Preapre notebook cell code template
-    def create_notebook(self):
-        self.notebook.cells = [
+    def prepare_notebook(self, jupyter_notebook):
+        if os.path.exists(jupyter_notebook):
+            self.notebook = nbf.read(jupyter_notebook, as_version=4)
+            
+        self.notebook.cells.extend([
             nbf.v4.new_code_cell("""
                 # Section "Dependencies"
 
@@ -174,7 +198,7 @@ class SPICalculationNotebookTool(BaseAgentTool):
                 period_of_interest = {period_of_interest} # start_month, end_month
 
                 cds_client = cdsapi.Client(url='https://cds.climate.copernicus.eu/api', key=getpass.getpass("YOUR CDS-API-KEY")) # CDS client
-            """),
+            """, metadata={"need_format": True}),
             nbf.v4.new_code_cell("""
                 filename = f'era5_land__total_precipitation__{{"_".join([str(c) for c in area])}}__monthly__{{reference_period[0]}}_{{reference_period[1]:02d}}.nc'
 
@@ -379,8 +403,7 @@ class SPICalculationNotebookTool(BaseAgentTool):
                 # variable "spi_values" is a numpy.array with shape (time, lat, lon) and it is representig numerical values of spi index over each time for each lat-lon cell
                 display(spi_values) 
             """)
-            
-        ]
+        ])
         
         
     # DOC: Execute the tool → Build notebook, write it to a file and return the path to the notebook and the zarr output file
@@ -389,8 +412,9 @@ class SPICalculationNotebookTool(BaseAgentTool):
         area: str | list[float],
         reference_period: tuple = (1981, 2010),
         period_of_interest: tuple = ((datetime.datetime.now()-dateutil.relativedelta.relativedelta(months=1)).strftime('%Y-%m'), datetime.datetime.now().strftime('%Y-%m')),
+        jupyter_notebook: str = None,
     ): 
-        self.create_notebook()    
+        self.prepare_notebook(jupyter_notebook)    
         nb_values = {
             'area': area,
             'reference_period': reference_period,
@@ -398,14 +422,12 @@ class SPICalculationNotebookTool(BaseAgentTool):
         }
         for cell in self.notebook.cells:
             if cell.cell_type in ("markdown", "code"):
-                cell.source = utils.safe_code_lines(cell.source, format_dict=nb_values)
+                cell.source = utils.safe_code_lines(cell.source, format_dict=nb_values if cell.metadata.get("need_format", False) else None)
         
-        notebook_name = f"spi_calculation_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.ipynb"
-        notebook_path = os.path.join(utils._temp_dir, notebook_name)
-        nbf.write(self.notebook, notebook_path) 
+        nbf.write(self.notebook, jupyter_notebook) 
         
         return {
-            "notebook": notebook_path
+            "notebook": jupyter_notebook
         }
         
     
@@ -415,6 +437,7 @@ class SPICalculationNotebookTool(BaseAgentTool):
         area: str | list[float],
         reference_period: tuple = (1981, 2010),
         period_of_interest: tuple = ((datetime.datetime.now()-dateutil.relativedelta.relativedelta(months=1)).strftime('%Y-%m'), datetime.datetime.now().strftime('%Y-%m')),
+        jupyter_notebook: str = None,
         run_manager: None | Optional[CallbackManagerForToolRun] = None
     ) -> dict:
         
@@ -423,6 +446,7 @@ class SPICalculationNotebookTool(BaseAgentTool):
                 "area": area,
                 "reference_period": reference_period,
                 "period_of_interest": period_of_interest,
+                "jupyter_notebook": jupyter_notebook
             },
             run_manager=run_manager
         )

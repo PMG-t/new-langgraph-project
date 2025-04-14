@@ -1,5 +1,6 @@
 import os
 import datetime
+from dateutil import relativedelta
 from enum import Enum
 
 from typing import Optional
@@ -100,7 +101,8 @@ class CDSForecastNotebookTool(BaseAgentTool):
                 "2025-01-01",
                 "2025-02-01",
                 "2025-03-10",
-            ]
+            ],
+            default = None
         )
         lead_time: None | str = Field(
             title = "Lead Time",
@@ -110,7 +112,8 @@ class CDSForecastNotebookTool(BaseAgentTool):
                 "2023-02-01",
                 "2023-03-01",
                 "2023-04-10",
-            ]
+            ],
+            default = None
         )
         zarr_output: None | str = Field(
             title = "Output Zarr File",
@@ -120,6 +123,17 @@ class CDSForecastNotebookTool(BaseAgentTool):
                 "C:/Users/username/appdata/local/temp/output-<variable>.zarr",
                 "/path/to/output-<variable>-<date>.zarr",
                 "S3://bucket-name/path/to/<location>-<varibale>-data.zarr",
+            ],
+            default = None
+        )
+        jupyter_notebook: None | str = Field(
+            title = "Jupyter Notebook",
+            description = f"The path to the jupyter notebook that was used to build the data ingest procedure. If not specified is None",
+            examples = [
+                None,
+                "C:/Users/username/appdata/local/temp/output-<variable>.ipynb",
+                "/path/to/output-<variable>-<date>.ipynb",
+                "S3://bucket-name/path/to/<location>-<varibale>-data.ipynb",
             ],
             default = None
         )
@@ -162,19 +176,23 @@ class CDSForecastNotebookTool(BaseAgentTool):
             ],
             'init_time': [
                 lambda **ka: f"Invalid initialization time: {ka['init_time']}. It should be in the format YYYY-MM-DD."
-                    if utils.try_default(lambda: datetime.datetime.strptime(ka['init_time'], "%Y-%m-%d"), None) is None else None,
+                    if ka['init_time'] is not None and utils.try_default(lambda: datetime.datetime.strptime(ka['init_time'], "%Y-%m-%d"), None) is None else None,
                 lambda **ka: f"Invalid initialization time: {ka['init_time']}. It should be in the past, at least in the previous month."
-                    if datetime.datetime.strptime(ka['init_time'], '%Y-%m-%d') > datetime.datetime.now() else None
+                    if ka['init_time'] is not None and datetime.datetime.strptime(ka['init_time'], '%Y-%m-%d') > datetime.datetime.now() else None
             ],
             'lead_time': [
                 lambda **ka: f"Invalid lead time: {ka['lead_time']}. It should be in the format YYYY-MM-DD."
-                    if utils.try_default(lambda: datetime.datetime.strptime(ka['lead_time'], "%Y-%m-%d"), None) is None else None,
+                    if ka['lead_time'] is not None and utils.try_default(lambda: datetime.datetime.strptime(ka['lead_time'], "%Y-%m-%d"), None) is None else None,
                 lambda **ka: f"Invalid lead time: {ka['lead_time']}. It should be in the after the init time."
-                    if utils.try_default(lambda: datetime.datetime.strptime(ka['lead_time'], '%Y-%m-%d') < datetime.datetime.strptime(ka['init_time'], '%Y-%m-%d'), False) else None,
+                    if ka['init_time'] is not None and ka['lead_time'] is not None and utils.try_default(lambda: datetime.datetime.strptime(ka['lead_time'], '%Y-%m-%d') < datetime.datetime.strptime(ka['init_time'], '%Y-%m-%d'), False) else None,
             ],
             'zarr_output': [
                 lambda **ka: f"Invalid output path: {ka['zarr_output']}. It should be a valid zarr file path."
                     if ka['zarr_output'] is not None and not ka['zarr_output'].lower().endswith('.zarr') else None
+            ],
+            'jupyter_notebook': [
+                lambda **ka: f"Invalid notebook path: {ka['jupyter_notebook']}. It should be a valid jupyter notebook file path."
+                    if ka['jupyter_notebook'] is not None and not ka['jupyter_notebook'].lower().endswith('.ipynb') else None
             ]
         }
         
@@ -200,21 +218,42 @@ class CDSForecastNotebookTool(BaseAgentTool):
                 return area
             return bounding_box_from_location_name(ka['area'])
         
+        def infer_init_time(**ka):
+            if ka['init_time'] is None:
+                return datetime.datetime.now().strftime('%Y-%m-01')
+            return ka['init_time']
+        
+        def infer_lead_time(**ka):
+            if ka['lead_time'] is None:
+                return (datetime.datetime.now().date().replace(day=1) + relativedelta.relativedelta(month=1)).strftime('%Y-%m-01')
+            return ka['lead_time']
+        
         def infer_zarr_output(**ka):
             if ka['zarr_output'] is None:
                 return f"icisk-ai_cds-forecast_{ka['forecast_variables'][0]}_{datetime.datetime.now().isoformat(timespec='seconds').replace(':','-')}.zarr"
             return ka['zarr_output']
         
+        def infer_jupyter_notebook(**ka):
+            if ka['jupyter_notebook'] is None:
+                return f"icisk-ai_cds-forecast_{ka['forecast_variables'][0]}_{datetime.datetime.now().isoformat(timespec='seconds').replace(':','-')}.ipynb"
+            return ka['jupyter_notebook']
+        
         return {
             'forecast_variables': infer_forecast_variables,
             'area': infer_area,
-            'zarr_output': infer_zarr_output
+            'init_time': infer_init_time,
+            'lead_time': infer_lead_time,
+            'zarr_output': infer_zarr_output,
+            'jupyter_notebook': infer_jupyter_notebook,
         }
         
     
     # DOC: Preapre notebook cell code template
-    def create_notebook(self):
-        self.notebook.cells = [
+    def prepare_notebook(self, jupyter_notebook):
+        if os.path.exists(jupyter_notebook):
+            self.notebook = nbf.read(jupyter_notebook, as_version=4)
+        
+        self.notebook.cells.extend([
             nbf.v4.new_code_cell("""
                 # Section "Dependencies"
 
@@ -260,7 +299,7 @@ class CDSForecastNotebookTool(BaseAgentTool):
 
                 # ingested data ouput zarr file
                 zarr_output = '{zarr_output}'
-            """),
+            """, metadata={"need_format": True}),
             nbf.v4.new_code_cell("""
                 # Section "Call I-Cisk cds-ingestor-process API"
 
@@ -375,7 +414,7 @@ class CDSForecastNotebookTool(BaseAgentTool):
 
                 display(dataset)
             """)
-        ]
+        ])
     
     
     # DOC: Execute the tool → Build notebook, write it to a file and return the path to the notebook and the zarr output file
@@ -385,9 +424,10 @@ class CDSForecastNotebookTool(BaseAgentTool):
         area: str | list[float],
         init_time: str,
         lead_time: str,
-        zarr_output: str
+        zarr_output: str,
+        jupyter_notebook: str
     ): 
-        self.create_notebook()    
+        self.prepare_notebook(jupyter_notebook)    
         nb_values = {
             'forecast_variables': [self.InputForecastVariable(var).as_cds for var in forecast_variables],
             'area': area,
@@ -400,13 +440,12 @@ class CDSForecastNotebookTool(BaseAgentTool):
         }
         for cell in self.notebook.cells:
             if cell.cell_type in ("markdown", "code"):
-                cell.source = utils.safe_code_lines(cell.source, format_dict=nb_values)
-        notebook_path = os.path.join(utils._temp_dir, f'{utils.juststem(zarr_output)}.ipynb')
-        nbf.write(self.notebook, notebook_path) 
+                cell.source = utils.safe_code_lines(cell.source, format_dict=nb_values if cell.metadata.get("need_format", False) else None)
+        nbf.write(self.notebook, jupyter_notebook) 
         
         return {
             "data_source": zarr_output,
-            "notebook": notebook_path,
+            "notebook": jupyter_notebook,
         }
         
     
@@ -415,9 +454,10 @@ class CDSForecastNotebookTool(BaseAgentTool):
         self, 
         forecast_variables: list[str],
         area: str | list[float],
-        init_time: str,
-        lead_time: str,
+        init_time: str = None,
+        lead_time: str = None,
         zarr_output: str = None,
+        jupyter_notebook: str = None,
         run_manager: None | Optional[CallbackManagerForToolRun] = None
     ) -> dict:
         
@@ -427,7 +467,8 @@ class CDSForecastNotebookTool(BaseAgentTool):
                 "area": area,
                 "init_time": init_time,
                 "lead_time": lead_time,
-                "zarr_output": zarr_output
+                "zarr_output": zarr_output,
+                "jupyter_notebook": jupyter_notebook,
             },
             run_manager=run_manager
         )
