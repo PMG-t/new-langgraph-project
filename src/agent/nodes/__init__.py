@@ -10,11 +10,11 @@ from .base_tool_interrupt_node import (
 )
     
 from .chatbot import (
-    chatbot, 
-    # chatbot_router
+    chatbot
 )
 
 from .subgraphs import (
     cds_ingestor_subgraph,
-    spi_calculation_subgraph
+    spi_calculation_subgraph,
+    code_editor_subgraph
 )

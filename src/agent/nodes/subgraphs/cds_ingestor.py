@@ -7,7 +7,7 @@ from langgraph.types import Command
 from agent import utils
 from agent.names import *
 from agent.states.state import State
-from agent.tools import CDSForecastNotebookTool, CDSForecastCodeEditorTool
+from agent.tools import CDSForecastNotebookTool
 from agent.nodes import BaseToolHandlerNode, BaseToolInterruptNode
 
 
@@ -17,11 +17,8 @@ from agent.nodes import BaseToolHandlerNode, BaseToolInterruptNode
 
 
 cds_forecast_notebook_tool = CDSForecastNotebookTool()
-cds_forecast_code_editor_tool = CDSForecastCodeEditorTool()
-
 cds_forecast_tools_dict = {
-    cds_forecast_notebook_tool.name: cds_forecast_notebook_tool,
-    cds_forecast_code_editor_tool.name: cds_forecast_code_editor_tool
+    cds_forecast_notebook_tool.name: cds_forecast_notebook_tool
 }
 cds_tool_names = list(cds_forecast_tools_dict.keys())
 cds_tools = list(cds_forecast_tools_dict.values())

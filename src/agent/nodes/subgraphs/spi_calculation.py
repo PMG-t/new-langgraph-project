@@ -7,7 +7,7 @@ from langgraph.types import Command
 from agent import utils
 from agent.names import *
 from agent.states.state import State
-from agent.tools import SPICalculationNotebookTool, SPICalculationCodeEditorTool
+from agent.tools import SPICalculationNotebookTool
 from agent.nodes import BaseToolHandlerNode, BaseToolInterruptNode
 
 
@@ -17,11 +17,8 @@ from agent.nodes import BaseToolHandlerNode, BaseToolInterruptNode
 
 
 spi_calculation_notebook_tool = SPICalculationNotebookTool()
-spi_calculation_code_editor_tool = SPICalculationCodeEditorTool()
-
 spi_calculation_tools_dict = {
-    spi_calculation_notebook_tool.name: spi_calculation_notebook_tool,
-    spi_calculation_code_editor_tool.name: spi_calculation_code_editor_tool
+    spi_calculation_notebook_tool.name: spi_calculation_notebook_tool
 }
 spi_tool_names = list(spi_calculation_tools_dict.keys())
 spi_tools = list(spi_calculation_tools_dict.values())
@@ -61,13 +58,10 @@ spi_calculation_tool_interrupt = BaseToolInterruptNode(
 spi_calculation_graph_builder = StateGraph(SPIState)
 
 # DOC: Nodes
-# spi_calculation_graph_builder.add_node(SPI_CHATBOT, spi_chatbot)
-
 spi_calculation_graph_builder.add_node(SPI_CALCULATION_TOOL_HANDLER, spi_calculation_tool_handler)
 spi_calculation_graph_builder.add_node(SPI_CALCULATION_TOOL_INTERRUPT, spi_calculation_tool_interrupt)
 
 # DOC: Edges
-# spi_calculation_graph_builder.add_edge(START, SPI_CHATBOT)
 spi_calculation_graph_builder.add_edge(START, SPI_CALCULATION_TOOL_HANDLER)
 
 # DOC: Compile

@@ -15,9 +15,19 @@ CHATBOT_ROUTER = "chatbot_router"
 # Endregion: [Chatbot]
 
 
-# REGION: [SPI Calculation]
+# REGION: [Base Tools]
 
-SPI_CHATBOT = "spi_chatbot"
+CODE_EDITOR_SUBGRAPH = "code_editor_subgraph"
+
+CODE_EDITOR_TOOL = 'code_editor_tool'
+
+CODE_EDITOR_TOOL_HANDLER = "code_editor_tool_handler"
+CODE_EDITOR_TOOL_INTERRUPT = "code_editor_tool_interrupt"
+
+# ENDREGION: [Base Tools]
+
+
+# REGION: [SPI Calculation]
 
 SPI_CALCULATION_SUBGRAPH = "spi_calculation_subgraph"
 
@@ -31,8 +41,6 @@ SPI_CALCULATION_TOOL_INTERRUPT = "spi_calculation_tool_interrupt"
 
 
 # REGION: [CDS Forecast]
-
-CDS_CHATBOT = "cds_chatbot"
 
 CDS_FORECAST_SUBGRAPH = "cds_forecast_subgraph"
 
