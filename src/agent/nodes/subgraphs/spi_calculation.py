@@ -49,7 +49,7 @@ spi_calculation_tool_interrupt = BaseToolInterruptNode(
     tool_handler_node_name = SPI_CALCULATION_TOOL_HANDLER,
     tool_interrupt_node_name = SPI_CALCULATION_TOOL_INTERRUPT,
     tools = spi_calculation_tools_dict,
-    tool_interupt_handlers = dict()     # DOC: use default 
+    custom_tool_interupt_handlers = dict()     # DOC: use default 
 )
 
 

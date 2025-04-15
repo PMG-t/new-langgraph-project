@@ -49,7 +49,7 @@ cds_forecast_tool_interrupt = BaseToolInterruptNode(
     tool_handler_node_name = CDS_FORECAST_TOOL_HANDLER,
     tool_interrupt_node_name = CDS_FORECAST_TOOL_INTERRUPT,
     tools = cds_forecast_tools_dict,
-    tool_interupt_handlers = dict()     # DOC: use default 
+    custom_tool_interupt_handlers = dict()     # DOC: use default 
 )
     
     

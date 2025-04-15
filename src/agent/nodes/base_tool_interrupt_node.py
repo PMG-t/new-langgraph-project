@@ -221,7 +221,7 @@ class BaseToolInterruptOutputConfirmationHandler(BaseToolInterruptHandler):
         )
         return interrupt_message
     
-    def _generate_provided_output(self, response):
+    def _classify_output_confirmation(self, response):
         args_value = '\n'.join([ f'- {arg}: {val}' for arg,val in self.tool_interrupt["data"]["args"].items() ])
         output_description = '\n'.join([ f'- {out_name}: {out_value}' for out_name,out_value in self.tool_interrupt["data"]["output"].items() ])
         provided_output = utils.ask_llm(
@@ -247,6 +247,25 @@ class BaseToolInterruptOutputConfirmationHandler(BaseToolInterruptHandler):
         )   
         return provided_output
     
+    def _generate_provided_output(self, response):
+        args_value = '\n'.join([ f'- {arg}: {val}' for arg,val in self.tool_interrupt["data"]["args"].items() ])
+        update_inputs = utils.ask_llm(
+            role = 'system',
+            message = f"""Tool was called with this input arguments:
+            {args_value}
+            
+            Output was:
+            {self.tool_interrupt['reason']}
+            
+            But user provided this additional information for the execution:
+            {response}
+            
+            Return a dictionary string with the input arguments valued with the update provide by user and nothing else.
+            """,
+            eval_output = True
+        )
+        return update_inputs
+    
     def handle(self, tool, interupt_data):
         super().handle(tool, interupt_data)
         
@@ -256,7 +275,7 @@ class BaseToolInterruptOutputConfirmationHandler(BaseToolInterruptHandler):
             "interrupt_type": ToolInterrupt.ToolInterruptType.CONFIRM_OUTPUT,
         })
         response = interruption.get('response', 'User did not provide any response.')
-        provided_output = self._generate_provided_output(response)
+        provided_output = self._classify_output_confirmation(response)
         
         if provided_output is True:
             self.tool.output_confirmed = True
@@ -266,22 +285,23 @@ class BaseToolInterruptOutputConfirmationHandler(BaseToolInterruptHandler):
             }
         
         elif provided_output is False:
-            args_value = '\n'.join([ f'- {arg}: {val}' for arg,val in self.tool_interrupt["data"]["args"].items() ])
-            update_inputs = utils.ask_llm(
-                role = 'system',
-                message = f"""Tool was called with this input arguments:
-                {args_value}
+            # args_value = '\n'.join([ f'- {arg}: {val}' for arg,val in self.tool_interrupt["data"]["args"].items() ])
+            # update_inputs = utils.ask_llm(
+            #     role = 'system',
+            #     message = f"""Tool was called with this input arguments:
+            #     {args_value}
                 
-                Output was:
-                {self.tool_interrupt['reason']}
+            #     Output was:
+            #     {self.tool_interrupt['reason']}
                 
-                But user provided this additional information for the execution:
-                {response}
+            #     But user provided this additional information for the execution:
+            #     {response}
                 
-                Return a dictionary string with the input arguments valued with the update provide by user and nothing else.
-                """,
-                eval_output = True
-            )
+            #     Return a dictionary string with the input arguments valued with the update provide by user and nothing else.
+            #     """,
+            #     eval_output = True
+            # )
+            update_inputs = self._generate_provided_output(response)
             
             self.tool_message.tool_calls[-1]["args"].update(update_inputs)
             self.tool.output_confirmed = False
@@ -307,7 +327,7 @@ class BaseToolInterruptNode:
         tool_handler_node_name: str,
         tool_interrupt_node_name: str,
         tools: dict,
-        tool_interupt_handlers: dict = dict(),
+        custom_tool_interupt_handlers: dict = dict(),
     ):
         instance = super().__new__(cls) 
         instance.__init__(
@@ -315,7 +335,7 @@ class BaseToolInterruptNode:
             tool_handler_node_name,
             tool_interrupt_node_name,
             tools,
-            tool_interupt_handlers
+            custom_tool_interupt_handlers
         )
         return instance.setup()
     
@@ -334,14 +354,14 @@ class BaseToolInterruptNode:
             tool_handler_node_name: str,
             tool_interrupt_node_name: str,
             tools: dict,
-            tool_interupt_handlers: dict = dict(),
+            custom_tool_interupt_handlers: dict = dict(),
     ):
         self.state = state
         self.state_type = type(state)
         self.tool_handler_node_name = tool_handler_node_name
         self.tool_interrupt_node_name = tool_interrupt_node_name
         self.tools = tools
-        self.tool_interupt_handlers.update(tool_interupt_handlers) # DOC: Dict Key is ToolInterruptType and Value is the handler class
+        self.tool_interupt_handlers.update(custom_tool_interupt_handlers) # DOC: Dict Key is ToolInterruptType and Value is the handler class
         
     def setup(self):
         

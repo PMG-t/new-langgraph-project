@@ -7,8 +7,8 @@ from langgraph.types import Command
 from agent import utils
 from agent.names import *
 from agent.states.state import State
-from agent.tools import CodeEditorTool
-from agent.nodes import BaseToolHandlerNode, BaseToolInterruptNode
+from agent.tools import ToolInterrupt, CodeEditorTool
+from agent.nodes import BaseToolHandlerNode, BaseToolInterruptNode, BaseToolInterruptOutputConfirmationHandler
 
 
 
@@ -17,11 +17,9 @@ from agent.nodes import BaseToolHandlerNode, BaseToolInterruptNode
 
 
 code_editor_tool = CodeEditorTool()
-# spi_calculation_code_editor_tool = SPICalculationCodeEditorTool()
 
 code_editor_tools_dict = {
-    code_editor_tool.name: code_editor_tool,
-    # spi_calculation_code_editor_tool.name: spi_calculation_code_editor_tool
+    code_editor_tool.name: code_editor_tool
 }
 code_editor_tool_names = list(code_editor_tools_dict.keys())
 code_editor_tools = list(code_editor_tools_dict.values())
@@ -46,13 +44,39 @@ code_editor_tool_handler = BaseToolHandlerNode(
 )
 
 
+
+# DOC: Override this method to handle CodeEditor output updating
+class CodeEditorToolInterruptOutputConfirmationHandler(BaseToolInterruptOutputConfirmationHandler):
+    
+    def _generate_provided_output(self, response):
+        args_value = '\n'.join([ f'- {arg}: {val}' for arg,val in self.tool_interrupt["data"]["args"].items() ])
+        update_inputs = utils.ask_llm(
+            role = 'system',
+            message = f"""Tool was called with this input arguments:
+            {args_value}
+            
+            Output was:
+            {self.tool_interrupt['reason']}
+            
+            But user provided this additional information for the execution:
+            {response}
+            
+            Update the initial input argument 'code_request' with the user provided information in order to get a more detailed request.
+            Return the updated dictionary of input arguments and nothing else.
+            """,
+            eval_output = True
+        )
+        return update_inputs
+        
 # DOC: Base tool interrupt node: handle tool interrupt by type and go back to tool hndler with updatet state to rerun tool
 code_editor_tool_interrupt = BaseToolInterruptNode(
     state = CodeEditorState,
     tool_handler_node_name = CODE_EDITOR_TOOL_HANDLER,
     tool_interrupt_node_name = CODE_EDITOR_TOOL_INTERRUPT,
     tools = code_editor_tools_dict,
-    tool_interupt_handlers = dict()     # DOC: use default 
+    custom_tool_interupt_handlers = {
+        ToolInterrupt.ToolInterruptType.CONFIRM_OUTPUT: CodeEditorToolInterruptOutputConfirmationHandler(),
+    }
 )
 
 
